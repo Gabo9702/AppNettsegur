@@ -1,0 +1,8 @@
+[
+  { "proyectoId": "PRY-001", "nombreProyecto": "CCTV Alcaldía de Chía", "nombreCliente": "Alcaldía Municipal de Chía" },
+  { "proyectoId": "PRY-002", "nombreProyecto": "Control de acceso Bodega Siberia", "nombreCliente": "Logística Andina S.A.S." },
+  { "proyectoId": "PRY-003", "nombreProyecto": "Cercado eléctrico Finca La Esperanza", "nombreCliente": "Finca La Esperanza" },
+  { "proyectoId": "PRY-004", "nombreProyecto": "Alarmas Conjunto Residencial Los Robles", "nombreCliente": "Conjunto Residencial Los Robles P.H." },
+  { "proyectoId": "PRY-005", "nombreProyecto": "Red y cámaras Oficinas Calle 100", "nombreCliente": "Consultores Asociados Ltda." },
+  { "proyectoId": "PRY-006", "nombreProyecto": "CCTV Centro Comercial Plaza Norte", "nombreCliente": "Centro Comercial Plaza Norte" }
+]

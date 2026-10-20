@@ -1,1 +1,3 @@
 /build
+# Configuración de Firebase (contiene la API key del proyecto)
+google-services.json
