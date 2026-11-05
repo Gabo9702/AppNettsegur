@@ -38,6 +38,16 @@ object RutasFirebase {
     fun proyectosPorTecnico(uidTecnico: String) = "indices/proyectosPorTecnico/$uidTecnico"
     fun proyectoPorTecnico(uidTecnico: String, proyectoId: String) =
         "indices/proyectosPorTecnico/$uidTecnico/$proyectoId"
+    // Índices que M1 agrega en la fase C para listar de forma segura por nodo (ver docs/m1_resumen.md).
+    fun proyectosPorCliente(clienteUid: String) = "indices/proyectosPorCliente/$clienteUid"
+    fun proyectoPorCliente(clienteUid: String, proyectoId: String) =
+        "indices/proyectosPorCliente/$clienteUid/$proyectoId"
+    fun proyectosPorIngeniero(ingenieroUid: String) = "indices/proyectosPorIngeniero/$ingenieroUid"
+    fun proyectoPorIngeniero(ingenieroUid: String, proyectoId: String) =
+        "indices/proyectosPorIngeniero/$ingenieroUid/$proyectoId"
+    fun cartasPorProyecto(proyectoId: String) = "indices/cartasPorProyecto/$proyectoId"
+    fun cartaPorProyecto(proyectoId: String, cartaId: String) =
+        "indices/cartasPorProyecto/$proyectoId/$cartaId"
 
     // ---- documentos (solo metadatos; el Base64 va aparte en archivos/) ----
     fun documentos(proyectoId: String) = "documentos/$proyectoId"

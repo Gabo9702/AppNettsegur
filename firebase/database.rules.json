@@ -52,6 +52,24 @@
             ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO' && root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid"
           }
         }
+      },
+      "proyectosPorCliente": {
+        "$uid": {
+          ".read": "auth != null && auth.uid == $uid"
+        }
+      },
+      "proyectosPorIngeniero": {
+        "$uid": {
+          ".read": "auth != null && auth.uid == $uid"
+        }
+      },
+      "cartasPorProyecto": {
+        "$pid": {
+          ".read": "auth != null && (root.child('proyectos').child($pid).child('clienteUid').val() == auth.uid || root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA' || root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO')",
+          "$cartaId": {
+            ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA'"
+          }
+        }
       }
     },
 

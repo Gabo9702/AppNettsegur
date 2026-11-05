@@ -6,16 +6,16 @@ import com.cgro.appnettsegur.data.local.AppDatabase
 import com.cgro.appnettsegur.data.prefs.SesionStore
 import com.cgro.appnettsegur.data.remote.FirebaseNovedadesDataSource
 import com.cgro.appnettsegur.data.repository.ArchivosRepository
-import com.cgro.appnettsegur.data.repository.ArchivosRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.ArchivosRepositoryImpl
 import com.cgro.appnettsegur.data.repository.CartasRepository
-import com.cgro.appnettsegur.data.repository.CartasRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.CartasRepositoryImpl
 import com.cgro.appnettsegur.data.repository.DocumentosRepository
-import com.cgro.appnettsegur.data.repository.DocumentosRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.DocumentosRepositoryImpl
 import com.cgro.appnettsegur.data.repository.EmpleadosRepository
-import com.cgro.appnettsegur.data.repository.EmpleadosRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.EmpleadosRepositoryImpl
 import com.cgro.appnettsegur.data.repository.NovedadRepository
 import com.cgro.appnettsegur.data.repository.ProyectosRepository
-import com.cgro.appnettsegur.data.repository.ProyectosRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.ProyectosRepositoryImpl
 import com.cgro.appnettsegur.data.repository.SesionRepositoryImpl
 import com.cgro.appnettsegur.data.repository.SyncRepository
 import com.cgro.appnettsegur.util.ConectividadMonitor
@@ -45,12 +45,13 @@ class AppContainer(context: Context) {
     val novedadRepository = NovedadRepository(context, database)
     val syncRepository = SyncRepository(database, FirebaseNovedadesDataSource(context), conectividad)
 
-    // Repositorios de los roles (fase A: de relleno; la fase C los hace reales).
-    val proyectosRepository: ProyectosRepository = ProyectosRepositoryRelleno()
-    val documentosRepository: DocumentosRepository = DocumentosRepositoryRelleno()
-    val archivosRepository: ArchivosRepository = ArchivosRepositoryRelleno()
-    val empleadosRepository: EmpleadosRepository = EmpleadosRepositoryRelleno()
-    val cartasRepository: CartasRepository = CartasRepositoryRelleno()
+    // Repositorios de los roles (fase C: implementaciones reales contra Firebase RTDB).
+    private val appContext = context.applicationContext
+    val proyectosRepository: ProyectosRepository = ProyectosRepositoryImpl(appContext)
+    val documentosRepository: DocumentosRepository = DocumentosRepositoryImpl(appContext)
+    val archivosRepository: ArchivosRepository = ArchivosRepositoryImpl(appContext)
+    val empleadosRepository: EmpleadosRepository = EmpleadosRepositoryImpl(appContext)
+    val cartasRepository: CartasRepository = CartasRepositoryImpl(appContext)
 }
 
 class AppNettsegur : Application() {

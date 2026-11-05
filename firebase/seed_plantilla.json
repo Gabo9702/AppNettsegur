@@ -112,6 +112,18 @@
         "PRY-001": true,
         "PRY-002": true
       }
+    },
+    "proyectosPorCliente": {
+      "UID_CLIENTE": {
+        "PRY-001": true,
+        "PRY-002": true
+      }
+    },
+    "proyectosPorIngeniero": {
+      "UID_INGENIERO": {
+        "PRY-001": true,
+        "PRY-002": true
+      }
     }
   }
 }

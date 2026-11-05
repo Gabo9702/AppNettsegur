@@ -47,7 +47,9 @@ Qué incluye el seed:
   personal** (`proyectos/{pid}/personal`) que el cliente sí puede leer.
 - 3 `empleados` con cumplimiento. `EMP-002` tiene el certificado de **alturas vencido** a
   propósito, para ver un empleado **no habilitado**.
-- `indices/proyectosPorTecnico` para que el técnico cargue sus proyectos sin Internet después.
+- `indices/proyectosPorTecnico`, `indices/proyectosPorCliente` e `indices/proyectosPorIngeniero`
+  para listar los proyectos de cada rol sin abrir la lectura de todo el árbol (patrón de índice
+  que M1 agregó en la fase C; ver `docs/m1_resumen.md`).
 
 > Las `novedades` y sus `indices/novedadesPorProyecto` NO van en el seed: las crea el técnico al
 > **SINCRONIZAR** (fase D).

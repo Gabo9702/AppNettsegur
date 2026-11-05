@@ -80,6 +80,14 @@ object Mensajes {
     // Secciones que necesitan conexión (sección 3)
     const val SECCION_NECESITA_INTERNET = "Esta sección necesita conexión a Internet."
 
+    // Firebase / archivos (secciones 2 y 6.2)
+    const val FIREBASE_NO_CONFIGURADO = "Firebase no está configurado (falta google-services.json)."
+    const val ARCHIVO_TIPO_NO_PERMITIDO = "Solo se permiten archivos PDF, JPG o PNG."
+    const val ARCHIVO_MUY_GRANDE = "El archivo supera el máximo de 1,5 MB."
+    const val ARCHIVO_NO_LEIDO = "No se pudo leer el archivo seleccionado."
+    const val ARCHIVO_NO_ENCONTRADO = "El archivo ya no está disponible en el servidor."
+    const val EMPLEADO_SIN_USUARIO = "El empleado no tiene una cuenta de técnico asociada."
+
     // Pantallas de relleno (se reemplazan en M2)
     fun pantallaEnConstruccion(rol: String) = "Inicio de $rol (en construcción)."
 
