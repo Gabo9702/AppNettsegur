@@ -3,9 +3,20 @@ package com.cgro.appnettsegur
 import android.app.Application
 import android.content.Context
 import com.cgro.appnettsegur.data.local.AppDatabase
-import com.cgro.appnettsegur.data.prefs.PerfilTecnicoStore
+import com.cgro.appnettsegur.data.prefs.SesionStore
 import com.cgro.appnettsegur.data.remote.FirebaseNovedadesDataSource
+import com.cgro.appnettsegur.data.repository.ArchivosRepository
+import com.cgro.appnettsegur.data.repository.ArchivosRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.CartasRepository
+import com.cgro.appnettsegur.data.repository.CartasRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.DocumentosRepository
+import com.cgro.appnettsegur.data.repository.DocumentosRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.EmpleadosRepository
+import com.cgro.appnettsegur.data.repository.EmpleadosRepositoryRelleno
 import com.cgro.appnettsegur.data.repository.NovedadRepository
+import com.cgro.appnettsegur.data.repository.ProyectosRepository
+import com.cgro.appnettsegur.data.repository.ProyectosRepositoryRelleno
+import com.cgro.appnettsegur.data.repository.SesionRepositoryImpl
 import com.cgro.appnettsegur.data.repository.SyncRepository
 import com.cgro.appnettsegur.util.ConectividadMonitor
 import com.cgro.appnettsegur.util.ImagenUtils
@@ -24,10 +35,22 @@ class AppContainer(context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val database = AppDatabase.construir(context)
-    val perfilStore = PerfilTecnicoStore(context)
     val conectividad = ConectividadMonitor(context)
+
+    // Sesión (M1): Firebase Auth + caché en DataStore. El nombre del técnico sale de aquí.
+    val sesionStore = SesionStore(context)
+    val sesionRepository = SesionRepositoryImpl(context, sesionStore)
+
+    // Flujo del técnico (taller).
     val novedadRepository = NovedadRepository(context, database)
     val syncRepository = SyncRepository(database, FirebaseNovedadesDataSource(context), conectividad)
+
+    // Repositorios de los roles (fase A: de relleno; la fase C los hace reales).
+    val proyectosRepository: ProyectosRepository = ProyectosRepositoryRelleno()
+    val documentosRepository: DocumentosRepository = DocumentosRepositoryRelleno()
+    val archivosRepository: ArchivosRepository = ArchivosRepositoryRelleno()
+    val empleadosRepository: EmpleadosRepository = EmpleadosRepositoryRelleno()
+    val cartasRepository: CartasRepository = CartasRepositoryRelleno()
 }
 
 class AppNettsegur : Application() {

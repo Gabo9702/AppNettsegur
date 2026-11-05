@@ -27,13 +27,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cgro.appnettsegur.AppNettsegur
+import com.cgro.appnettsegur.config.Rol
 import com.cgro.appnettsegur.ui.SyncViewModel
 import com.cgro.appnettsegur.ui.captura.CapturaScreen
 import com.cgro.appnettsegur.ui.componentes.LocalMensajero
 import com.cgro.appnettsegur.ui.detalle.DetalleScreen
 import com.cgro.appnettsegur.ui.inicio.InicioScreen
 import com.cgro.appnettsegur.ui.listado.ListadoScreen
-import com.cgro.appnettsegur.ui.perfil.PerfilScreen
+import com.cgro.appnettsegur.ui.login.LoginScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -48,6 +49,10 @@ fun NavGraph() {
         }
     }
 
+    val container = (LocalContext.current.applicationContext as AppNettsegur).container
+    val sesion = container.sesionRepository
+    val usuario by sesion.usuario.collectAsStateWithLifecycle()
+
     // Creado con el ViewModelStore de la Activity: compartido por todas las pantallas.
     val sync: SyncViewModel = viewModel(factory = SyncViewModel.Factory)
     val progreso by sync.progreso.collectAsStateWithLifecycle()
@@ -55,33 +60,39 @@ fun NavGraph() {
     val falloSimuladoEn by sync.falloSimuladoEn.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { sync.mensajes.collect { mensajero(it) } }
 
-    // Pantalla inicial: Perfil si todavía no hay nombre de técnico; si no, Inicio.
-    val perfil = (LocalContext.current.applicationContext as AppNettsegur).container.perfilStore
+    // Pantalla inicial: inicio del rol si hay sesión en caché (sin Internet); si no, Login (5.1).
     var inicio by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        if (inicio == null) inicio = if (perfil.obtenerNombre().isBlank()) Rutas.perfil(primerInicio = true) else Rutas.INICIO
+        if (inicio == null) {
+            val u = sesion.restaurarSesion()
+            inicio = if (u != null) Rutas.inicioDeRol(u.rol) else Rutas.LOGIN
+        }
     }
     val destinoInicial = inicio ?: return
+
+    // Tras iniciar sesión: ir al inicio del rol, sin dejar el login en la pila.
+    val irAInicioDeRol: (Rol) -> Unit = { rol ->
+        navController.navigate(Rutas.inicioDeRol(rol)) {
+            popUpTo(navController.graph.id) { inclusive = true }
+        }
+    }
+    // Cerrar sesión: limpia la sesión y vuelve al login, sin dejar nada en la pila.
+    val cerrarSesion: () -> Unit = {
+        alcance.launch {
+            sesion.cerrarSesion()
+            navController.navigate(Rutas.LOGIN) { popUpTo(navController.graph.id) { inclusive = true } }
+        }
+    }
 
     CompositionLocalProvider(LocalMensajero provides mensajero) {
         Box(Modifier.fillMaxSize()) {
             NavHost(navController = navController, startDestination = destinoInicial) {
-                composable(
-                    Rutas.PERFIL,
-                    arguments = listOf(navArgument(Rutas.ARG_PRIMER_INICIO) { type = NavType.BoolType; defaultValue = false }),
-                ) { entrada ->
-                    val primerInicio = entrada.arguments?.getBoolean(Rutas.ARG_PRIMER_INICIO) ?: false
-                    PerfilScreen(
-                        primerInicio = primerInicio,
-                        onListo = {
-                            if (primerInicio) {
-                                navController.navigate(Rutas.INICIO) { popUpTo(navController.graph.id) { inclusive = true } }
-                            } else {
-                                navController.popBackStack()
-                            }
-                        },
-                    )
+
+                composable(Rutas.LOGIN) {
+                    LoginScreen(onLogueado = irAInicioDeRol)
                 }
+
+                // ---------- Técnico (flujo del taller) ----------
                 composable(Rutas.INICIO) {
                     InicioScreen(
                         hayInternet = hayInternet,
@@ -91,7 +102,7 @@ fun NavGraph() {
                         onSimularFallo = sync::simularFalloEn,
                         onNuevo = { navController.navigate(Rutas.nuevaCaptura()) },
                         onVerRegistros = { navController.navigate(Rutas.LISTADO) },
-                        onEditarPerfil = { navController.navigate(Rutas.perfil(primerInicio = false)) },
+                        onCerrarSesion = cerrarSesion,
                     )
                 }
                 composable(
@@ -121,6 +132,41 @@ fun NavGraph() {
                         onReintentar = sync::sincronizar,
                     )
                 }
+
+                // ---------- Inicios de los demás roles (relleno; M2 los reemplaza) ----------
+                composable(Rutas.INICIO_CLIENTE) {
+                    InicioRolRelleno("Cliente", usuario?.nombre.orEmpty(),
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                }
+                composable(Rutas.INICIO_INGENIERO) {
+                    InicioRolRelleno("Ingeniero", usuario?.nombre.orEmpty(),
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                }
+                composable(Rutas.INICIO_RH) {
+                    InicioRolRelleno("HCQ y RH", usuario?.nombre.orEmpty(),
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                }
+                composable(Rutas.INICIO_ANALISTA) {
+                    InicioRolRelleno("Analista", usuario?.nombre.orEmpty(),
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                }
+
+                // ---------- Pantallas compartidas (relleno; M2 y M3 las reemplazan) ----------
+                composable(
+                    Rutas.PROYECTO_DETALLE,
+                    arguments = listOf(navArgument(Rutas.ARG_PROYECTO) { type = NavType.StringType }),
+                ) { PantallaRellenoSimple("Proyecto", onVolver = { navController.popBackStack() }) }
+                composable(
+                    Rutas.EMPLEADO_DETALLE,
+                    arguments = listOf(navArgument(Rutas.ARG_EMPLEADO) { type = NavType.StringType }),
+                ) { PantallaRellenoSimple("Empleado", onVolver = { navController.popBackStack() }) }
+                composable(Rutas.BANDEJA) {
+                    PantallaRellenoSimple("Notificaciones", onVolver = { navController.popBackStack() })
+                }
+                composable(
+                    Rutas.NOVEDAD_REMOTA,
+                    arguments = listOf(navArgument(Rutas.ARG_ID) { type = NavType.StringType }),
+                ) { PantallaRellenoSimple("Novedad", onVolver = { navController.popBackStack() }) }
             }
             SnackbarHost(
                 snackbar,

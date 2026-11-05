@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -22,7 +23,6 @@ import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.ManageAccounts
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.AlertDialog
@@ -75,11 +75,12 @@ fun InicioScreen(
     onSimularFallo: (Int?) -> Unit,
     onNuevo: () -> Unit,
     onVerRegistros: () -> Unit,
-    onEditarPerfil: () -> Unit,
+    onCerrarSesion: () -> Unit,
     viewModel: InicioViewModel = viewModel(factory = InicioViewModel.Factory),
 ) {
     val s by viewModel.estado.collectAsStateWithLifecycle()
     var menuDesarrollador by remember { mutableStateOf(false) }
+    var confirmarCierre by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -102,8 +103,8 @@ fun InicioScreen(
                             Icon(Icons.Outlined.BugReport, contentDescription = "Menú de desarrollador")
                         }
                     }
-                    IconButton(onClick = onEditarPerfil) {
-                        Icon(Icons.Outlined.ManageAccounts, contentDescription = "Editar perfil del técnico")
+                    IconButton(onClick = { confirmarCierre = true }) {
+                        Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = Mensajes.CERRAR_SESION)
                     }
                 },
             )
@@ -181,6 +182,36 @@ fun InicioScreen(
                 menuDesarrollador = false
             },
             onCerrar = { menuDesarrollador = false },
+        )
+    }
+
+    // Cerrar sesión: si hay registros PENDIENTE/ERROR, advierte y exige confirmar otra vez (5.1).
+    if (confirmarCierre) {
+        val pendientes = s.conteos.porSincronizar
+        AlertDialog(
+            onDismissRequest = { confirmarCierre = false },
+            icon = { Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null) },
+            title = { Text(Mensajes.CERRAR_SESION_TITULO) },
+            text = {
+                Text(
+                    if (pendientes > 0) Mensajes.cerrarSesionConPendientes(pendientes)
+                    else "Se cerrará tu sesión en este dispositivo.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmarCierre = false
+                        onCerrarSesion()
+                    },
+                ) {
+                    Text(
+                        Mensajes.CERRAR_SESION,
+                        color = if (pendientes > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    )
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirmarCierre = false }) { Text("Cancelar") } },
         )
     }
 }

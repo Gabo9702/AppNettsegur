@@ -29,4 +29,17 @@ object Limites {
 
     // Listado
     const val CARACTERES_ID_CORTO = 8
+
+    // ---- Módulos nuevos (MODULOS.md) ----
+
+    // Documentos y archivos (sección 2): Cloud Storage necesita el plan Blaze, así que
+    // los archivos se guardan en RTDB como Base64, con un límite por archivo original.
+    const val MAX_ARCHIVO_BYTES = 1_500_000L // 1,5 MB
+    val MIMES_PERMITIDOS = setOf("application/pdf", "image/jpeg", "image/png")
+
+    // Cumplimiento (sección 6.2): un documento está POR_VENCER si le quedan 15 días o menos.
+    const val DIAS_POR_VENCER = 15L
+
+    // Notificaciones: últimas N que muestra la bandeja (lo usa M3).
+    const val MAX_NOTIFICACIONES = 50
 }
