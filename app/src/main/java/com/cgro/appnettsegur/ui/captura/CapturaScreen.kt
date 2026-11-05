@@ -189,6 +189,14 @@ fun CapturaScreen(
                         error = s.errores[Campo.PROYECTO],
                         modifier = Modifier.bringIntoViewRequester(anclas.getValue(Campo.PROYECTO)),
                     )
+                    // Sin proyectos en caché: hay que conectarse una vez para descargarlos (5.2).
+                    if (s.proyectos.isEmpty() && !s.cargando) {
+                        Text(
+                            Mensajes.CAPTURA_SIN_PROYECTOS,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                     CampoTexto(
                         valor = s.nombreCliente,
                         onCambio = {},

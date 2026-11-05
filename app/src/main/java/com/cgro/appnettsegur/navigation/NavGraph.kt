@@ -66,12 +66,20 @@ fun NavGraph() {
         if (inicio == null) {
             val u = sesion.restaurarSesion()
             inicio = if (u != null) Rutas.inicioDeRol(u.rol) else Rutas.LOGIN
+            // Si el técnico ya tenía sesión, intenta refrescar sus proyectos asignados (sección 5.2).
+            if (u?.rol == Rol.TECNICO) {
+                alcance.launch { container.novedadRepository.actualizarProyectosDelTecnico(u.uid) }
+            }
         }
     }
     val destinoInicial = inicio ?: return
 
     // Tras iniciar sesión: ir al inicio del rol, sin dejar el login en la pila.
     val irAInicioDeRol: (Rol) -> Unit = { rol ->
+        // Al iniciar sesión el técnico descarga sus proyectos asignados (sección 5.2).
+        if (rol == Rol.TECNICO) {
+            alcance.launch { sesion.usuario.value?.uid?.let { container.novedadRepository.actualizarProyectosDelTecnico(it) } }
+        }
         navController.navigate(Rutas.inicioDeRol(rol)) {
             popUpTo(navController.graph.id) { inclusive = true }
         }

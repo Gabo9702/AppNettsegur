@@ -20,6 +20,7 @@ object Mensajes {
 
     // Captura
     const val GUARDADO = "Guardado en el dispositivo"
+    const val CAPTURA_SIN_PROYECTOS = "Conéctate una vez para descargar tus proyectos asignados."
     const val ERROR_GUARDANDO = "No se pudo guardar en el dispositivo. Intente de nuevo."
     const val ERROR_IMAGEN = "No se pudo procesar la imagen. Intente con otra foto."
     const val SALIR_SIN_GUARDAR_TITULO = "¿Salir sin guardar?"
@@ -79,6 +80,11 @@ object Mensajes {
 
     // Secciones que necesitan conexión (sección 3)
     const val SECCION_NECESITA_INTERNET = "Esta sección necesita conexión a Internet."
+
+    // Proyectos del técnico (sección 5.2)
+    const val PROYECTOS_SIN_CONEXION = "Sin conexión. No se pueden actualizar los proyectos ahora."
+    const val PROYECTOS_ERROR = "No se pudieron actualizar los proyectos. Intenta de nuevo."
+    fun proyectosActualizados(n: Int) = "Proyectos actualizados: $n asignados."
 
     // Firebase / archivos (secciones 2 y 6.2)
     const val FIREBASE_NO_CONFIGURADO = "Firebase no está configurado (falta google-services.json)."

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -77,6 +78,19 @@ interface ProyectoDao {
     @Query("SELECT COUNT(*) FROM proyectos")
     suspend fun contar(): Int
 
+    @Query("SELECT * FROM proyectos WHERE proyectoId = :id")
+    suspend fun obtenerPorId(id: String): ProyectoEntity?
+
     @Query("SELECT * FROM proyectos ORDER BY nombreProyecto ASC")
     fun observarTodos(): Flow<List<ProyectoEntity>>
+
+    @Query("DELETE FROM proyectos")
+    suspend fun borrarTodos()
+
+    // Reemplaza el catálogo con los proyectos recién descargados del técnico, en una transacción.
+    @Transaction
+    suspend fun reemplazarTodos(proyectos: List<ProyectoEntity>) {
+        borrarTodos()
+        insertarTodos(proyectos)
+    }
 }

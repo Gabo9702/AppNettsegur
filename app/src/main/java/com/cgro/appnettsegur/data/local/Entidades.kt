@@ -31,6 +31,8 @@ data class NovedadEntity(
     val rolRepresentanteCliente: String,
     val rutaFirmaTecnico: String,
     val rutaFirmaRepresentante: String,
+    // uid del técnico autor (MODULOS.md, sección 5.4). Lo exige la regla de escritura de novedades.
+    val uidTecnico: String = "",
     val estadoSync: EstadoSync,
     val fechaCreacion: Long,
     val fechaModificacion: Long,
@@ -62,12 +64,19 @@ data class EvidenciaEntity(
     val fechaCaptura: Long,
 )
 
-/** Catálogo local de proyectos (sección 5.3), cargado desde assets/proyectos.json. */
+/**
+ * Proyectos asignados al técnico (MODULOS.md, sección 5.2), guardados en Room para trabajar sin
+ * conexión. Se descargan de indices/proyectosPorTecnico cuando hay red (ya no de assets).
+ * Se incluyen clienteUid e ingenieroUid: la sincronización los necesita para notificar.
+ */
 @Entity(tableName = "proyectos")
 data class ProyectoEntity(
     @PrimaryKey val proyectoId: String,
     val nombreProyecto: String,
     val nombreCliente: String,
+    val clienteUid: String = "",
+    val ingenieroUid: String = "",
+    val fechaActualizacion: Long = 0L,
 )
 
 /** Contadores para la pantalla de inicio. */

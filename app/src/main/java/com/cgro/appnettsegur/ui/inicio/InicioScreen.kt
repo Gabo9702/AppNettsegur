@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.AlertDialog
@@ -41,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cgro.appnettsegur.BuildConfig
 import com.cgro.appnettsegur.config.Mensajes
 import com.cgro.appnettsegur.data.repository.ProgresoSync
+import com.cgro.appnettsegur.ui.componentes.LocalMensajero
 import com.cgro.appnettsegur.ui.componentes.TarjetaSeccion
 import com.cgro.appnettsegur.ui.theme.Blanco
 import com.cgro.appnettsegur.ui.theme.ColorPendiente
@@ -81,6 +84,10 @@ fun InicioScreen(
     val s by viewModel.estado.collectAsStateWithLifecycle()
     var menuDesarrollador by remember { mutableStateOf(false) }
     var confirmarCierre by remember { mutableStateOf(false) }
+
+    // Los avisos de "Actualizar proyectos" se muestran en el snackbar global.
+    val mensajero = LocalMensajero.current
+    LaunchedEffect(Unit) { viewModel.mensajes.collect { mensajero(it) } }
 
     Scaffold(
         topBar = {
@@ -146,6 +153,14 @@ fun InicioScreen(
             OutlinedButton(onClick = onVerRegistros, modifier = Modifier.fillMaxWidth().height(52.dp)) {
                 Icon(Icons.AutoMirrored.Outlined.List, contentDescription = null)
                 Text("  Ver registros")
+            }
+            OutlinedButton(
+                onClick = { viewModel.actualizarProyectos() },
+                enabled = hayInternet,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                Icon(Icons.Outlined.Refresh, contentDescription = null)
+                Text("  Actualizar proyectos")
             }
             Button(
                 onClick = onSincronizar,

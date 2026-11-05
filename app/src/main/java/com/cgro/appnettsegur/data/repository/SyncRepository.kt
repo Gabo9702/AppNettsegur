@@ -4,13 +4,16 @@ import android.graphics.Bitmap
 import com.cgro.appnettsegur.BuildConfig
 import com.cgro.appnettsegur.config.Limites
 import com.cgro.appnettsegur.config.Mensajes
+import com.cgro.appnettsegur.config.RutasFirebase
 import com.cgro.appnettsegur.data.local.AppDatabase
 import com.cgro.appnettsegur.data.local.EvidenciaEntity
 import com.cgro.appnettsegur.data.local.NovedadEntity
 import com.cgro.appnettsegur.data.remote.FirebaseNovedadesDataSource
+import com.cgro.appnettsegur.notificaciones.NotificacionFactory
 import com.cgro.appnettsegur.util.ConectividadMonitor
 import com.cgro.appnettsegur.util.ImagenUtils
 import com.google.firebase.database.DatabaseException
+import com.google.firebase.database.ServerValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +43,7 @@ class SyncRepository(
 ) {
     private val novedadDao = db.novedadDao()
     private val evidenciaDao = db.evidenciaDao()
+    private val proyectoDao = db.proyectoDao()
 
     // Bandera para ignorar un segundo toque mientras ya se está sincronizando.
     private val sincronizando = AtomicBoolean(false)
@@ -70,13 +74,13 @@ class SyncRepository(
 
                     val evidencias = evidenciaDao.obtenerDeRegistro(registro.idRegistro)
                     validarArchivos(registro, evidencias)
-                    val mapa = aMapaFirebase(registro, evidencias)
+                    val updates = construirEscrituraMultiRuta(registro, evidencias)
 
                     // El SDK de RTDB encola las escrituras sin conexión y no devuelve error: sin este
                     // timeout el botón quedaría esperando para siempre. Si la escritura llega tarde,
-                    // cae sobre la misma llave (idRegistro) y no se duplica.
+                    // cae sobre las mismas llaves (idRegistro, nov_{id}) y no se duplica.
                     withTimeout(Limites.TIMEOUT_SYNC_MS) {
-                        firebase.escribir(registro.idRegistro, mapa)
+                        firebase.escribirMultiRuta(updates)
                     }
                     // Solo se marca SINCRONIZADO después de que Firebase confirmó.
                     novedadDao.marcarSincronizado(registro.idRegistro, System.currentTimeMillis())
@@ -135,6 +139,7 @@ class SyncRepository(
             "proyectoId" to r.proyectoId,
             "nombreCliente" to r.nombreCliente,
             "nombreTecnico" to r.nombreTecnico,
+            "uidTecnico" to r.uidTecnico, // lo exige la regla de escritura de novedades (5.3)
             "fechaServicio" to r.fechaServicio,
             "horaInicio" to r.horaInicio,
             "horaFin" to r.horaFin,
@@ -152,7 +157,36 @@ class SyncRepository(
             "fechaCreacion" to r.fechaCreacion,
             "evidencias" to fotos,
             "firmas" to firmas,
+            // La hora de confirmación la pone el servidor (antes iba aparte en el data source).
+            "fechaSincronizacionServidor" to ServerValue.TIMESTAMP,
         )
+    }
+
+    /**
+     * Arma la escritura ATÓMICA multi-ruta de la sección 5.3: la novedad, su índice por proyecto y
+     * las notificaciones al cliente y al ingeniero. Es lo ÚNICO que cambió respecto al taller
+     * (antes era un setValue en novedades/{id}); el resto del algoritmo es idéntico.
+     *
+     * Idempotente: todas las llaves son fijas (idRegistro, nov_{id}), así que un reintento
+     * sobrescribe los mismos nodos y no duplica la novedad ni las notificaciones.
+     */
+    private suspend fun construirEscrituraMultiRuta(
+        registro: NovedadEntity,
+        evidencias: List<EvidenciaEntity>,
+    ): Map<String, Any?> {
+        val mapaNovedad = aMapaFirebase(registro, evidencias)
+        // clienteUid/ingenieroUid salen del proyecto en caché (Room), descargado en la sección 5.2.
+        val proyecto = proyectoDao.obtenerPorId(registro.proyectoId)
+        return buildMap {
+            put(RutasFirebase.novedad(registro.idRegistro), mapaNovedad)
+            put(RutasFirebase.novedadPorProyecto(registro.proyectoId, registro.idRegistro), true)
+            proyecto?.clienteUid?.takeIf { it.isNotBlank() }?.let {
+                putAll(NotificacionFactory.novedadSincronizada(it, registro))
+            }
+            proyecto?.ingenieroUid?.takeIf { it.isNotBlank() }?.let {
+                putAll(NotificacionFactory.novedadSincronizada(it, registro))
+            }
+        }
     }
 
     /** Convierte la excepción en un texto que el técnico pueda entender. */

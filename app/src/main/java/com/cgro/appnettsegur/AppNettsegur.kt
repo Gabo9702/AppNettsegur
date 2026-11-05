@@ -63,7 +63,8 @@ class AppNettsegur : Application() {
         super.onCreate()
         container = AppContainer(this)
         container.appScope.launch {
-            container.novedadRepository.cargarCatalogoSiVacio()
+            // Los proyectos del técnico ya no vienen de assets: se descargan del índice al iniciar
+            // sesión o con "Actualizar proyectos" (sección 5.2). Aquí solo se limpian temporales.
             // Fotos temporales de formularios que no se guardaron (p. ej. si la app se cerró a la fuerza).
             ImagenUtils.limpiarTemporales(this@AppNettsegur)
         }
