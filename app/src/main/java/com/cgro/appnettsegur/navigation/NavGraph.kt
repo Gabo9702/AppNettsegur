@@ -33,6 +33,7 @@ import com.cgro.appnettsegur.ui.captura.CapturaScreen
 import com.cgro.appnettsegur.ui.componentes.LocalMensajero
 import com.cgro.appnettsegur.ui.detalle.DetalleScreen
 import com.cgro.appnettsegur.ui.cliente.InicioClienteScreen
+import com.cgro.appnettsegur.ui.ingeniero.InicioIngenieroScreen
 import com.cgro.appnettsegur.ui.compartido.NovedadRemotaScreen
 import com.cgro.appnettsegur.ui.compartido.ProyectoDetalleScreen
 import com.cgro.appnettsegur.ui.inicio.InicioScreen
@@ -171,9 +172,12 @@ fun NavGraph(
                     )
                 }
                 composable(Rutas.INICIO_INGENIERO) {
-                    InicioRolRelleno("Ingeniero", usuario?.nombre.orEmpty(),
-                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion,
-                        pedirPermisoNotificaciones = true)
+                    InicioIngenieroScreen(
+                        nombreUsuario = usuario?.nombre.orEmpty(),
+                        onAbrirProyecto = { navController.navigate(Rutas.proyectoDetalle(it)) },
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) },
+                        onCerrarSesion = cerrarSesion,
+                    )
                 }
                 composable(Rutas.INICIO_RH) {
                     InicioRolRelleno("HCQ y RH", usuario?.nombre.orEmpty(),

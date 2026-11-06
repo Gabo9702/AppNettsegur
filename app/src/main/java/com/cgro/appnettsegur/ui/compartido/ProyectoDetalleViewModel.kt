@@ -8,15 +8,19 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.cgro.appnettsegur.AppNettsegur
+import android.net.Uri
 import com.cgro.appnettsegur.config.Rol
 import com.cgro.appnettsegur.data.model.Carta
 import com.cgro.appnettsegur.data.model.Documento
+import com.cgro.appnettsegur.data.model.Empleado
 import com.cgro.appnettsegur.data.model.NovedadRemota
 import com.cgro.appnettsegur.data.model.PersonalAsignado
 import com.cgro.appnettsegur.data.model.Proyecto
+import com.cgro.appnettsegur.data.model.TipoDocumento
 import com.cgro.appnettsegur.data.repository.ArchivosRepository
 import com.cgro.appnettsegur.data.repository.CartasRepository
 import com.cgro.appnettsegur.data.repository.DocumentosRepository
+import com.cgro.appnettsegur.data.repository.EmpleadosRepository
 import com.cgro.appnettsegur.data.repository.ProyectosRepository
 import com.cgro.appnettsegur.data.repository.SesionRepository
 import com.cgro.appnettsegur.navigation.Rutas
@@ -28,6 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -55,6 +60,7 @@ class ProyectoDetalleViewModel(
     private val documentos: DocumentosRepository,
     private val archivos: ArchivosRepository,
     private val cartas: CartasRepository,
+    private val empleados: EmpleadosRepository,
     sesion: SesionRepository,
     conectividad: ConectividadMonitor,
     savedStateHandle: SavedStateHandle,
@@ -68,6 +74,15 @@ class ProyectoDetalleViewModel(
     val rol: StateFlow<Rol?> = sesion.usuario
         .map { it?.rol }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /**
+     * Empleados para la pestaña Técnicos (solo ingeniero). Se leen únicamente si el rol es INGENIERO:
+     * así el cliente no toca /empleados, que sus reglas no le permiten leer.
+     */
+    val empleadosDisponibles: StateFlow<List<Empleado>> = rol
+        .flatMapLatest { r -> if (r == Rol.INGENIERO) empleados.empleados() else flowOf(emptyList()) }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val reintentos = MutableStateFlow(0)
 
@@ -100,6 +115,20 @@ class ProyectoDetalleViewModel(
     /** Descarga un archivo (Base64 → cacheDir) para abrirlo con un visor. Lo usa cliente e ingeniero. */
     suspend fun descargar(archivoId: String): Result<File> = archivos.descargarAArchivoLocal(archivoId)
 
+    // ---- Acciones del ingeniero (CU-05, HU-11, HU-12) ----
+
+    /** Sube un documento: valida tipo/tamaño y notifica al cliente (todo en una escritura multi-ruta). */
+    suspend fun subirDocumento(tipo: TipoDocumento, uri: Uri): Result<Documento> =
+        documentos.subir(proyectoId, tipo, uri)
+
+    /** Marca o desmarca un hito; el avance se recalcula en el repositorio. */
+    suspend fun marcarHito(hitoId: String, completado: Boolean): Result<Unit> =
+        proyectos.marcarHito(proyectoId, hitoId, completado)
+
+    /** Asigna o quita un técnico (solo habilitados, lo valida la UI) y actualiza la vista de personal. */
+    suspend fun asignarTecnico(empleado: Empleado, asignar: Boolean): Result<Unit> =
+        proyectos.asignarTecnico(proyectoId, empleado, asignar)
+
     companion object {
         val Factory = viewModelFactory {
             initializer {
@@ -109,6 +138,7 @@ class ProyectoDetalleViewModel(
                     app.container.documentosRepository,
                     app.container.archivosRepository,
                     app.container.cartasRepository,
+                    app.container.empleadosRepository,
                     app.container.sesionRepository,
                     app.container.conectividad,
                     createSavedStateHandle(),

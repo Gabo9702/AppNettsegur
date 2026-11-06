@@ -18,6 +18,8 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material.icons.outlined.UploadFile
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -27,6 +29,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -45,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cgro.appnettsegur.config.Catalogos
+import com.cgro.appnettsegur.config.Rol
 import com.cgro.appnettsegur.data.model.Carta
 import com.cgro.appnettsegur.data.model.Documento
 import com.cgro.appnettsegur.data.model.Hito
@@ -53,16 +57,19 @@ import com.cgro.appnettsegur.data.model.PersonalAsignado
 import com.cgro.appnettsegur.data.model.TipoDocumento
 import com.cgro.appnettsegur.ui.componentes.LocalMensajero
 import com.cgro.appnettsegur.ui.componentes.TarjetaSeccion
+import com.cgro.appnettsegur.ui.ingeniero.CargarDocumentoDialog
+import com.cgro.appnettsegur.ui.ingeniero.TabTecnicos
 import com.cgro.appnettsegur.util.Formatos
 import kotlinx.coroutines.launch
 
-/** Pestañas del detalle de proyecto (comunes a cliente e ingeniero en la fase 1). */
+/** Pestañas del detalle de proyecto. TECNICOS solo la ve el ingeniero (fase 2). */
 private enum class TabProyecto(val titulo: String) {
     AVANCE(MensajesRoles.TAB_AVANCE),
     DOCUMENTOS(MensajesRoles.TAB_DOCUMENTOS),
     PERSONAL(MensajesRoles.TAB_PERSONAL),
     NOVEDADES(MensajesRoles.TAB_NOVEDADES),
     CARTAS(MensajesRoles.TAB_CARTAS),
+    TECNICOS(MensajesRoles.TAB_TECNICOS),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,7 +81,15 @@ fun ProyectoDetalleScreen(
 ) {
     val s by viewModel.estado.collectAsStateWithLifecycle()
     val hayInternet by viewModel.hayInternet.collectAsStateWithLifecycle()
+    val rol by viewModel.rol.collectAsStateWithLifecycle()
+    val empleados by viewModel.empleadosDisponibles.collectAsStateWithLifecycle()
+    val esIngeniero = rol == Rol.INGENIERO
     var tab by rememberSaveable { mutableStateOf(TabProyecto.AVANCE) }
+
+    // El ingeniero ve además la pestaña Técnicos; el cliente solo las de lectura.
+    val tabs = remember(esIngeniero) {
+        TabProyecto.entries.filter { it != TabProyecto.TECNICOS || esIngeniero }
+    }
 
     Scaffold(
         topBar = {
@@ -97,8 +112,9 @@ fun ProyectoDetalleScreen(
                     PantallaCargando()
 
                 else -> {
-                    PrimaryScrollableTabRow(selectedTabIndex = tab.ordinal, edgePadding = 12.dp) {
-                        TabProyecto.entries.forEach { t ->
+                    val indice = tabs.indexOf(tab).coerceAtLeast(0)
+                    PrimaryScrollableTabRow(selectedTabIndex = indice, edgePadding = 12.dp) {
+                        tabs.forEach { t ->
                             Tab(
                                 selected = tab == t,
                                 onClick = { tab = t },
@@ -107,11 +123,13 @@ fun ProyectoDetalleScreen(
                         }
                     }
                     when (tab) {
-                        TabProyecto.AVANCE -> TabAvance(s.proyecto?.avancePorcentaje ?: 0, s.proyecto?.hitos.orEmpty())
-                        TabProyecto.DOCUMENTOS -> TabDocumentos(s.documentos, viewModel)
+                        TabProyecto.AVANCE ->
+                            TabAvance(s.proyecto?.avancePorcentaje ?: 0, s.proyecto?.hitos.orEmpty(), esIngeniero, viewModel)
+                        TabProyecto.DOCUMENTOS -> TabDocumentos(s.documentos, viewModel, esIngeniero)
                         TabProyecto.PERSONAL -> TabPersonal(s.personal)
                         TabProyecto.NOVEDADES -> TabNovedades(s.novedades, onAbrirNovedad)
                         TabProyecto.CARTAS -> TabCartas(s.cartas, viewModel)
+                        TabProyecto.TECNICOS -> TabTecnicos(empleados, s.personal, viewModel)
                     }
                 }
             }
@@ -123,7 +141,7 @@ fun ProyectoDetalleScreen(
 // Pestaña Avance: porcentaje + cronograma de hitos (solo lectura en la fase 1)
 // ---------------------------------------------------------------------------
 @Composable
-private fun TabAvance(avance: Int, hitos: List<Hito>) {
+private fun TabAvance(avance: Int, hitos: List<Hito>, esIngeniero: Boolean, viewModel: ProyectoDetalleViewModel) {
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
@@ -138,17 +156,29 @@ private fun TabAvance(avance: Int, hitos: List<Hito>) {
                 )
             }
         }
-        item { Text(MensajesRoles.CRONOGRAMA_TITULO, style = MaterialTheme.typography.titleMedium) }
+        item {
+            Text(MensajesRoles.CRONOGRAMA_TITULO, style = MaterialTheme.typography.titleMedium)
+            // El ingeniero puede marcar/desmarcar hitos; el avance se recalcula (HU-12).
+            if (esIngeniero) Text(
+                MensajesRoles.CRONOGRAMA_EDITAR,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         if (hitos.isEmpty()) {
             item { Text(MensajesRoles.SIN_HITOS, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         } else {
-            items(hitos, key = { it.hitoId }) { hito -> FilaHito(hito) }
+            items(hitos, key = { it.hitoId }) { hito -> FilaHito(hito, esIngeniero, viewModel) }
         }
     }
 }
 
 @Composable
-private fun FilaHito(hito: Hito) {
+private fun FilaHito(hito: Hito, esIngeniero: Boolean, viewModel: ProyectoDetalleViewModel) {
+    val mensajero = LocalMensajero.current
+    val scope = rememberCoroutineScope()
+    var trabajando by remember { mutableStateOf(false) }
+
     TarjetaSeccion(titulo = null) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -165,11 +195,26 @@ private fun FilaHito(hito: Hito) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(
-                if (hito.completado) MensajesRoles.HITO_COMPLETADO else MensajesRoles.HITO_PENDIENTE,
-                style = MaterialTheme.typography.labelMedium,
-                color = if (hito.completado) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (esIngeniero) {
+                Switch(
+                    checked = hito.completado,
+                    enabled = !trabajando,
+                    onCheckedChange = { nuevo ->
+                        trabajando = true
+                        scope.launch {
+                            val res = viewModel.marcarHito(hito.hitoId, nuevo)
+                            trabajando = false
+                            res.onFailure { mensajero(it.message ?: "No se pudo actualizar el hito.") }
+                        }
+                    },
+                )
+            } else {
+                Text(
+                    if (hito.completado) MensajesRoles.HITO_COMPLETADO else MensajesRoles.HITO_PENDIENTE,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (hito.completado) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -178,26 +223,69 @@ private fun FilaHito(hito: Hito) {
 // Pestaña Documentos: agrupados por tipo; al tocar uno se descarga y se abre
 // ---------------------------------------------------------------------------
 @Composable
-private fun TabDocumentos(documentos: List<Documento>, viewModel: ProyectoDetalleViewModel) {
-    if (documentos.isEmpty()) {
-        PantallaVacia(MensajesRoles.SIN_DOCUMENTOS)
-        return
-    }
+private fun TabDocumentos(documentos: List<Documento>, viewModel: ProyectoDetalleViewModel, esIngeniero: Boolean) {
+    val mensajero = LocalMensajero.current
+    val scope = rememberCoroutineScope()
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var subiendo by remember { mutableStateOf(false) }
     val porTipo = remember(documentos) { documentos.groupBy { it.tipo } }
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        TipoDocumento.entries.forEach { tipo ->
-            val lista = porTipo[tipo].orEmpty()
-            if (lista.isNotEmpty()) {
-                item(key = "cab_${tipo.name}") {
-                    Text(etiquetaTipoDocumento(tipo), style = MaterialTheme.typography.titleMedium)
+
+    Column(Modifier.fillMaxSize()) {
+        // El ingeniero puede cargar documentos (CU-05); el cliente solo los lee.
+        if (esIngeniero) {
+            Button(
+                onClick = { mostrarDialogo = true },
+                enabled = !subiendo,
+                modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp),
+            ) {
+                Icon(Icons.Outlined.UploadFile, contentDescription = null)
+                Text("  " + MensajesRoles.CARGAR_DOCUMENTO)
+            }
+            if (subiendo) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(4.dp))
+                    Text(MensajesRoles.DOC_SUBIENDO, style = MaterialTheme.typography.bodySmall)
                 }
-                items(lista, key = { it.documentoId }) { doc -> FilaDocumento(doc, viewModel) }
             }
         }
+        androidx.compose.foundation.layout.Box(Modifier.weight(1f).fillMaxWidth()) {
+            if (documentos.isEmpty()) {
+                PantallaVacia(MensajesRoles.SIN_DOCUMENTOS)
+            } else {
+                LazyColumn(
+                    Modifier.fillMaxSize(),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    TipoDocumento.entries.forEach { tipo ->
+                        val lista = porTipo[tipo].orEmpty()
+                        if (lista.isNotEmpty()) {
+                            item(key = "cab_${tipo.name}") {
+                                Text(etiquetaTipoDocumento(tipo), style = MaterialTheme.typography.titleMedium)
+                            }
+                            items(lista, key = { it.documentoId }) { doc -> FilaDocumento(doc, viewModel) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (mostrarDialogo) {
+        CargarDocumentoDialog(
+            onDismiss = { mostrarDialogo = false },
+            onPublicar = { tipo, uri ->
+                mostrarDialogo = false
+                subiendo = true
+                scope.launch {
+                    val res = viewModel.subirDocumento(tipo, uri)
+                    subiendo = false
+                    res.onSuccess { mensajero(MensajesRoles.DOC_PUBLICADO) }
+                        .onFailure { mensajero(it.message ?: MensajesRoles.DESCARGA_ERROR) }
+                }
+            },
+        )
     }
 }
 
