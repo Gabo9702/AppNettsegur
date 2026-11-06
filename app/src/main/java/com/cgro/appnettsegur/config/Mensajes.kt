@@ -105,6 +105,33 @@ object Mensajes {
     const val NOTIF_CARTA_TITULO = "Nueva carta de presentación"
     const val NOTIF_CARTA_MENSAJE = "El área administrativa publicó una carta de presentación para tu proyecto."
 
+    // Recepción de notificaciones (M3): bandeja, campana y sistema Android.
+    const val BANDEJA_TITULO = "Notificaciones"
+    const val BANDEJA_VACIA = "No tienes notificaciones todavía."
+    const val BANDEJA_MARCAR_TODAS = "Marcar todas como leídas"
+    const val CAMPANA_DESC = "Notificaciones"
+    fun campanaNoLeidas(n: Int) = "$n notificaciones sin leer"
+    // Canal de notificaciones del sistema Android (fase 2).
+    const val CANAL_ID = "actualizaciones_proyectos"
+    const val CANAL_NOMBRE = "Actualizaciones de proyectos"
+    const val CANAL_DESC = "Avisos de novedades, documentos y cartas de tus proyectos."
+    // Permiso POST_NOTIFICATIONS (Android 13+), con explicación previa (fase 2).
+    const val PERMISO_NOTIF_TITULO = "Permitir notificaciones"
+    const val PERMISO_NOTIF_TEXTO =
+        "Te avisaremos cuando haya novedades, documentos o cartas nuevas en tus proyectos. Puedes revisarlas también en la campana."
+    const val PERMISO_NOTIF_ACEPTAR = "Permitir"
+    const val PERMISO_NOTIF_AHORA_NO = "Ahora no"
+    const val PERMISO_NOTIF_NEGADO =
+        "Sin permiso de notificaciones. Revisa la campana para ver tus avisos."
+    // Resumen de varias notificaciones con la app cerrada (fase 3).
+    fun notifResumen(n: Int) = "Tienes $n actualizaciones nuevas"
+    // Alertas de vencimiento para RH (fase 4).
+    const val VENC_TITULO = "Documentos de cumplimiento"
+    fun vencMensaje(empleado: String, documento: String, estado: String) =
+        "$empleado: $documento $estado."
+    fun rhResumenVencimientos(vencidos: Int, porVencer: Int) =
+        "$vencidos documentos vencidos · $porVencer por vencer"
+
     // Perfil
     const val PERFIL_GUARDADO = "Perfil guardado"
 }

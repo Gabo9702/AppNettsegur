@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.cgro.appnettsegur.config.Mensajes
 import com.cgro.appnettsegur.ui.compartido.BarraRol
+import com.cgro.appnettsegur.ui.notificaciones.CampanaNotificaciones
 
 /**
  * Pantallas de RELLENO de la fase A (MODULOS.md, sección 6.2).
@@ -45,10 +45,8 @@ fun InicioRolRelleno(
                 titulo = tituloRol,
                 subtitulo = nombreUsuario.takeIf { it.isNotBlank() },
                 acciones = {
-                    // Espacio de la campana (M3): por ahora un acceso directo a la bandeja.
-                    IconButton(onClick = onBandeja) {
-                        Icon(Icons.Outlined.Notifications, contentDescription = "Notificaciones")
-                    }
+                    // Campana real de M3 con el contador de no leídas; abre la bandeja.
+                    CampanaNotificaciones(onAbrir = onBandeja)
                     IconButton(onClick = onCerrarSesion) {
                         Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = Mensajes.CERRAR_SESION)
                     }

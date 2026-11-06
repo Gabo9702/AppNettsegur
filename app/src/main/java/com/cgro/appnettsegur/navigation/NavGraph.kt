@@ -35,6 +35,7 @@ import com.cgro.appnettsegur.ui.detalle.DetalleScreen
 import com.cgro.appnettsegur.ui.inicio.InicioScreen
 import com.cgro.appnettsegur.ui.listado.ListadoScreen
 import com.cgro.appnettsegur.ui.login.LoginScreen
+import com.cgro.appnettsegur.ui.notificaciones.BandejaScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -168,8 +169,13 @@ fun NavGraph() {
                     Rutas.EMPLEADO_DETALLE,
                     arguments = listOf(navArgument(Rutas.ARG_EMPLEADO) { type = NavType.StringType }),
                 ) { PantallaRellenoSimple("Empleado", onVolver = { navController.popBackStack() }) }
+                // ---------- Bandeja de notificaciones (M3) ----------
                 composable(Rutas.BANDEJA) {
-                    PantallaRellenoSimple("Notificaciones", onVolver = { navController.popBackStack() })
+                    BandejaScreen(
+                        onVolver = { navController.popBackStack() },
+                        onAbrirNovedad = { refId -> navController.navigate(Rutas.novedadRemota(refId)) },
+                        onAbrirProyecto = { pid -> navController.navigate(Rutas.proyectoDetalle(pid)) },
+                    )
                 }
                 composable(
                     Rutas.NOVEDAD_REMOTA,

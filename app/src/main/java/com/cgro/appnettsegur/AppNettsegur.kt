@@ -13,6 +13,8 @@ import com.cgro.appnettsegur.data.repository.DocumentosRepository
 import com.cgro.appnettsegur.data.repository.DocumentosRepositoryImpl
 import com.cgro.appnettsegur.data.repository.EmpleadosRepository
 import com.cgro.appnettsegur.data.repository.EmpleadosRepositoryImpl
+import com.cgro.appnettsegur.data.repository.NotificacionesRepository
+import com.cgro.appnettsegur.data.repository.NotificacionesRepositoryImpl
 import com.cgro.appnettsegur.data.repository.NovedadRepository
 import com.cgro.appnettsegur.data.repository.ProyectosRepository
 import com.cgro.appnettsegur.data.repository.ProyectosRepositoryImpl
@@ -52,6 +54,9 @@ class AppContainer(context: Context) {
     val archivosRepository: ArchivosRepository = ArchivosRepositoryImpl(appContext)
     val empleadosRepository: EmpleadosRepository = EmpleadosRepositoryImpl(appContext)
     val cartasRepository: CartasRepository = CartasRepositoryImpl(appContext)
+
+    // Recepción de notificaciones (M3): bandeja, campana y avisos del sistema.
+    val notificacionesRepository: NotificacionesRepository = NotificacionesRepositoryImpl(appContext)
 }
 
 class AppNettsegur : Application() {
