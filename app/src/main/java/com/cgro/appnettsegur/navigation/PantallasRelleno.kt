@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.cgro.appnettsegur.config.Mensajes
 import com.cgro.appnettsegur.ui.compartido.BarraRol
 import com.cgro.appnettsegur.ui.notificaciones.CampanaNotificaciones
+import com.cgro.appnettsegur.ui.notificaciones.ResumenVencimientosRh
 import com.cgro.appnettsegur.ui.notificaciones.SolicitarPermisoNotificaciones
 
 /**
@@ -40,6 +41,7 @@ fun InicioRolRelleno(
     onBandeja: () -> Unit,
     onCerrarSesion: () -> Unit,
     pedirPermisoNotificaciones: Boolean = false,
+    mostrarResumenVencimientos: Boolean = false,
 ) {
     // M3: cliente e ingeniero (receptores de avisos del sistema) piden el permiso al entrar.
     if (pedirPermisoNotificaciones) SolicitarPermisoNotificaciones()
@@ -60,9 +62,11 @@ fun InicioRolRelleno(
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = if (mostrarResumenVencimientos) Arrangement.spacedBy(16.dp) else Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // M3: el inicio de RH muestra la tarjeta "N vencidos · M por vencer" (fase 4).
+            if (mostrarResumenVencimientos) ResumenVencimientosRh()
             Text(
                 Mensajes.pantallaEnConstruccion(tituloRol),
                 style = MaterialTheme.typography.bodyLarge,

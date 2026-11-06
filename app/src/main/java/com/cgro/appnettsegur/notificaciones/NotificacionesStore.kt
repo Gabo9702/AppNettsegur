@@ -19,6 +19,7 @@ private val Context.notificacionesDataStore by preferencesDataStore(name = "noti
 class NotificacionesStore(private val context: Context) {
 
     private val claveMostradas = stringSetPreferencesKey("ya_mostradas")
+    private val claveVencimientosRh = stringSetPreferencesKey("vencimientos_rh_mostrados")
     private val clavePermisoPreguntado = booleanPreferencesKey("permiso_preguntado")
 
     suspend fun yaMostradas(): Set<String> =
@@ -36,9 +37,25 @@ class NotificacionesStore(private val context: Context) {
         }
     }
 
-    /** Se limpia al cerrar sesión (MODULOS.md, fase 2 de M3). */
+    // ---- Alertas de vencimiento de RH (fase 4): se dedup por día con una clave que incluye hoy ----
+
+    suspend fun vencimientosRhMostrados(): Set<String> =
+        context.notificacionesDataStore.data.first()[claveVencimientosRh].orEmpty()
+
+    suspend fun marcarVencimientosRh(claves: Collection<String>) {
+        if (claves.isEmpty()) return
+        context.notificacionesDataStore.edit { p ->
+            // Solo se conservan las de hoy: las claves llevan la fecha, así el set no crece sin fin.
+            p[claveVencimientosRh] = p[claveVencimientosRh].orEmpty() + claves
+        }
+    }
+
+    /** Se limpia al cerrar sesión (MODULOS.md, fase 2 de M3): ambos registros locales. */
     suspend fun limpiarMostradas() {
-        context.notificacionesDataStore.edit { it.remove(claveMostradas) }
+        context.notificacionesDataStore.edit {
+            it.remove(claveMostradas)
+            it.remove(claveVencimientosRh)
+        }
     }
 
     suspend fun permisoPreguntado(): Boolean =

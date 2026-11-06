@@ -42,4 +42,20 @@ object ProgramadorTrabajos {
     fun cancelarRecepcion(context: Context) {
         WorkManager.getInstance(context).cancelUniqueWork(TRABAJO_RECEPCION)
     }
+
+    /** Revisión diaria de vencimientos de cumplimiento para RH (fase 4). */
+    fun programarVencimientosRh(context: Context) {
+        val solicitud = PeriodicWorkRequestBuilder<VencimientosRhWorker>(1, TimeUnit.DAYS)
+            .setConstraints(soloConRed)
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            TRABAJO_VENCIMIENTOS_RH,
+            ExistingPeriodicWorkPolicy.KEEP,
+            solicitud,
+        )
+    }
+
+    fun cancelarVencimientosRh(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(TRABAJO_VENCIMIENTOS_RH)
+    }
 }

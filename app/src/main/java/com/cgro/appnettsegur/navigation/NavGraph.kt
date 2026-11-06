@@ -170,7 +170,8 @@ fun NavGraph(
                 }
                 composable(Rutas.INICIO_RH) {
                     InicioRolRelleno("HCQ y RH", usuario?.nombre.orEmpty(),
-                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion,
+                        mostrarResumenVencimientos = true)
                 }
                 composable(Rutas.INICIO_ANALISTA) {
                     InicioRolRelleno("Analista", usuario?.nombre.orEmpty(),

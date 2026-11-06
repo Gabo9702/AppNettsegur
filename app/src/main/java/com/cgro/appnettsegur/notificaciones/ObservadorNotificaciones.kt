@@ -51,13 +51,26 @@ class ObservadorNotificaciones(
         // sesion.usuario es un StateFlow: ya emite solo cuando el usuario cambia.
         scope.launch {
             sesion.usuario.collect { usuario ->
-                when {
-                    usuario == null -> {
+                when (usuario?.rol) {
+                    null -> {
+                        // Cerró sesión: limpia el registro local y cancela los dos workers.
                         store.limpiarMostradas()
                         ProgramadorTrabajos.cancelarRecepcion(appContext)
+                        ProgramadorTrabajos.cancelarVencimientosRh(appContext)
                     }
-                    usuario.rol in RECEPTORES_FIREBASE -> ProgramadorTrabajos.programarRecepcion(appContext)
-                    else -> ProgramadorTrabajos.cancelarRecepcion(appContext)
+                    Rol.CLIENTE, Rol.INGENIERO -> {
+                        ProgramadorTrabajos.programarRecepcion(appContext)
+                        ProgramadorTrabajos.cancelarVencimientosRh(appContext)
+                    }
+                    Rol.RH -> {
+                        // RH recibe alertas LOCALES de vencimiento (fase 4), no avisos de Firebase.
+                        ProgramadorTrabajos.programarVencimientosRh(appContext)
+                        ProgramadorTrabajos.cancelarRecepcion(appContext)
+                    }
+                    else -> {
+                        ProgramadorTrabajos.cancelarRecepcion(appContext)
+                        ProgramadorTrabajos.cancelarVencimientosRh(appContext)
+                    }
                 }
             }
         }
