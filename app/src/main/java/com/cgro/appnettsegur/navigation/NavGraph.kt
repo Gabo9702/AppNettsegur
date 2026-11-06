@@ -32,6 +32,7 @@ import com.cgro.appnettsegur.ui.SyncViewModel
 import com.cgro.appnettsegur.ui.captura.CapturaScreen
 import com.cgro.appnettsegur.ui.componentes.LocalMensajero
 import com.cgro.appnettsegur.ui.detalle.DetalleScreen
+import com.cgro.appnettsegur.ui.analista.InicioAnalistaScreen
 import com.cgro.appnettsegur.ui.cliente.InicioClienteScreen
 import com.cgro.appnettsegur.ui.ingeniero.InicioIngenieroScreen
 import com.cgro.appnettsegur.ui.compartido.NovedadRemotaScreen
@@ -190,8 +191,11 @@ fun NavGraph(
                     )
                 }
                 composable(Rutas.INICIO_ANALISTA) {
-                    InicioRolRelleno("Analista", usuario?.nombre.orEmpty(),
-                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                    InicioAnalistaScreen(
+                        nombreUsuario = usuario?.nombre.orEmpty(),
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) },
+                        onCerrarSesion = cerrarSesion,
+                    )
                 }
 
                 // ---------- Pantallas compartidas ----------

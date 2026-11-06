@@ -11,6 +11,8 @@
     },
 
     "proyectos": {
+      ".read": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA'",
+
       "$pid": {
         ".read": "auth != null && (data.child('clienteUid').val() == auth.uid || data.child('ingenieroUid').val() == auth.uid || data.child('tecnicos').child(auth.uid).exists())",
 

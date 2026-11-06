@@ -30,6 +30,12 @@ interface SesionRepository {
 interface ProyectosRepository {
     fun proyectosDelCliente(uid: String): Flow<List<Proyecto>>
     fun proyectosDelIngeniero(uid: String): Flow<List<Proyecto>>
+    /**
+     * Todos los proyectos, para el ANALISTA (M2: generar cartas de presentación).
+     * Método ADITIVO confirmado por el equipo; las reglas dan lectura de /proyectos al analista
+     * (docs/m2_resumen.md).
+     */
+    fun proyectosParaAnalista(): Flow<List<Proyecto>>
     fun proyecto(id: String): Flow<Proyecto?>
     fun novedadesDelProyecto(id: String): Flow<List<NovedadRemota>>
     /**
