@@ -32,6 +32,9 @@ import com.cgro.appnettsegur.ui.SyncViewModel
 import com.cgro.appnettsegur.ui.captura.CapturaScreen
 import com.cgro.appnettsegur.ui.componentes.LocalMensajero
 import com.cgro.appnettsegur.ui.detalle.DetalleScreen
+import com.cgro.appnettsegur.ui.cliente.InicioClienteScreen
+import com.cgro.appnettsegur.ui.compartido.NovedadRemotaScreen
+import com.cgro.appnettsegur.ui.compartido.ProyectoDetalleScreen
 import com.cgro.appnettsegur.ui.inicio.InicioScreen
 import com.cgro.appnettsegur.ui.listado.ListadoScreen
 import com.cgro.appnettsegur.ui.login.LoginScreen
@@ -157,11 +160,15 @@ fun NavGraph(
                     )
                 }
 
-                // ---------- Inicios de los demás roles (relleno; M2 los reemplaza) ----------
+                // ---------- Inicios de los demás roles ----------
+                // M2: cliente real. Ingeniero, RH y analista siguen en relleno hasta sus fases.
                 composable(Rutas.INICIO_CLIENTE) {
-                    InicioRolRelleno("Cliente", usuario?.nombre.orEmpty(),
-                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion,
-                        pedirPermisoNotificaciones = true)
+                    InicioClienteScreen(
+                        nombreUsuario = usuario?.nombre.orEmpty(),
+                        onAbrirProyecto = { navController.navigate(Rutas.proyectoDetalle(it)) },
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) },
+                        onCerrarSesion = cerrarSesion,
+                    )
                 }
                 composable(Rutas.INICIO_INGENIERO) {
                     InicioRolRelleno("Ingeniero", usuario?.nombre.orEmpty(),
@@ -178,11 +185,17 @@ fun NavGraph(
                         onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
                 }
 
-                // ---------- Pantallas compartidas (relleno; M2 y M3 las reemplazan) ----------
+                // ---------- Pantallas compartidas ----------
+                // M2: detalle de proyecto (cliente e ingeniero). EMPLEADO_DETALLE llega en la fase 3.
                 composable(
                     Rutas.PROYECTO_DETALLE,
                     arguments = listOf(navArgument(Rutas.ARG_PROYECTO) { type = NavType.StringType }),
-                ) { PantallaRellenoSimple("Proyecto", onVolver = { navController.popBackStack() }) }
+                ) {
+                    ProyectoDetalleScreen(
+                        onVolver = { navController.popBackStack() },
+                        onAbrirNovedad = { navController.navigate(Rutas.novedadRemota(it)) },
+                    )
+                }
                 composable(
                     Rutas.EMPLEADO_DETALLE,
                     arguments = listOf(navArgument(Rutas.ARG_EMPLEADO) { type = NavType.StringType }),
@@ -198,7 +211,7 @@ fun NavGraph(
                 composable(
                     Rutas.NOVEDAD_REMOTA,
                     arguments = listOf(navArgument(Rutas.ARG_ID) { type = NavType.StringType }),
-                ) { PantallaRellenoSimple("Novedad", onVolver = { navController.popBackStack() }) }
+                ) { NovedadRemotaScreen(onVolver = { navController.popBackStack() }) }
             }
             SnackbarHost(
                 snackbar,

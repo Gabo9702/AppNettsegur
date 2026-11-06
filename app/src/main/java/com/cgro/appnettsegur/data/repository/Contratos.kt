@@ -32,6 +32,11 @@ interface ProyectosRepository {
     fun proyectosDelIngeniero(uid: String): Flow<List<Proyecto>>
     fun proyecto(id: String): Flow<Proyecto?>
     fun novedadesDelProyecto(id: String): Flow<List<NovedadRemota>>
+    /**
+     * Una novedad sincronizada por su idRegistro (M2: pantalla NovedadRemota y Bandeja de M3).
+     * Método ADITIVO solicitado por M2 y confirmado por el equipo (docs/m2_resumen.md).
+     */
+    fun novedad(idRegistro: String): Flow<NovedadRemota?>
     fun personalDelProyecto(id: String): Flow<List<PersonalAsignado>>
     suspend fun marcarHito(proyectoId: String, hitoId: String, completado: Boolean): Result<Unit>
     suspend fun asignarTecnico(proyectoId: String, empleado: Empleado, asignar: Boolean): Result<Unit>
