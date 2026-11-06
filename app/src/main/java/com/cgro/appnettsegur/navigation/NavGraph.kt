@@ -1,9 +1,11 @@
 package com.cgro.appnettsegur.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -36,6 +38,7 @@ import com.cgro.appnettsegur.ui.analista.InicioAnalistaScreen
 import com.cgro.appnettsegur.ui.cliente.InicioClienteScreen
 import com.cgro.appnettsegur.ui.ingeniero.InicioIngenieroScreen
 import com.cgro.appnettsegur.ui.compartido.NovedadRemotaScreen
+import com.cgro.appnettsegur.ui.compartido.PantallaCargando
 import com.cgro.appnettsegur.ui.compartido.ProyectoDetalleScreen
 import com.cgro.appnettsegur.ui.rh.EmpleadoDetalleScreen
 import com.cgro.appnettsegur.ui.rh.InicioRhScreen
@@ -86,7 +89,19 @@ fun NavGraph(
             }
         }
     }
-    val destinoInicial = inicio ?: return
+    // Mientras se restaura la sesión en caché (lectura en Firebase), mostramos una pantalla de
+    // carga con el fondo del tema, no la ventana en negro (arranque en frío con sesión guardada).
+    val destinoInicial = inicio
+    if (destinoInicial == null) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            PantallaCargando()
+        }
+        return
+    }
 
     // M3: si la app se abrió tocando una notificación, navega a su destino (solo con sesión activa).
     LaunchedEffect(rutaPendiente, usuario?.uid) {
