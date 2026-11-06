@@ -49,6 +49,23 @@ class ProyectosRepositoryImpl(private val context: Context) : ProyectosRepositor
         }
     }
 
+    override fun proyectosParaAnalista(): Flow<List<Proyecto>> {
+        if (!configurado) return flowOf(emptyList())
+        // El analista sí puede leer la colección /proyectos (regla aditiva de M1), así que se lee
+        // completa y se mapea cada hijo. No se usa un índice por rol porque no existe uno de analista.
+        return FirebaseFlows.flujoValor(FirebaseFlows.ref(RutasFirebase.PROYECTOS)) { snap ->
+            snap.children.mapNotNull { it.aProyecto() }.sortedBy { it.nombreProyecto.lowercase() }
+        }
+    }
+
+    override fun novedad(idRegistro: String): Flow<NovedadRemota?> {
+        if (!configurado) return flowOf(null)
+        // Se lee el nodo novedades/{id} y se convierte con el mapeo que ya usa M1 (aNovedadRemota).
+        return FirebaseFlows.flujoValor(FirebaseFlows.ref(RutasFirebase.novedad(idRegistro))) {
+            if (it.exists()) it.aNovedadRemota() else null
+        }
+    }
+
     override fun personalDelProyecto(id: String): Flow<List<PersonalAsignado>> {
         if (!configurado) return flowOf(emptyList())
         return FirebaseFlows.flujoValor(FirebaseFlows.ref(RutasFirebase.personalProyecto(id))) { snap ->

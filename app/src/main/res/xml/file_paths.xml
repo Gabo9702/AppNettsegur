@@ -2,4 +2,8 @@
 <!-- Carpeta temporal donde la app de cámara escribe la foto (ImagenUtils.crearArchivoCamara). -->
 <paths>
     <cache-path name="camara" path="camara/" />
+    <!-- M2: archivos descargados de RTDB (Base64) que se abren con un visor del sistema. -->
+    <cache-path name="descargas" path="descargas/" />
+    <!-- M2: cartas de presentación en PDF generadas por el analista antes de subirlas. -->
+    <cache-path name="cartas" path="cartas/" />
 </paths>
