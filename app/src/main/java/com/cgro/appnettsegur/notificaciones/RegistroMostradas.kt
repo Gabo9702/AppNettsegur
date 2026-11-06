@@ -18,4 +18,8 @@ object RegistroMostradas {
     /** IDs de todas las notificaciones vigentes (para poder podar las ya mostradas que ya no existen). */
     fun vigentes(notificaciones: List<Notificacion>): Set<String> =
         notificaciones.map { it.notificacionId }.toSet()
+
+    /** Cuenta las no leídas: es la misma cuenta que muestra el contador de la campana. */
+    fun conteoNoLeidas(notificaciones: List<Notificacion>): Int =
+        notificaciones.count { !it.leida }
 }

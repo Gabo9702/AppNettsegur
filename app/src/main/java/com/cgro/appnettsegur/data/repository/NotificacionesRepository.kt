@@ -6,6 +6,7 @@ import com.cgro.appnettsegur.config.RutasFirebase
 import com.cgro.appnettsegur.data.model.Notificacion
 import com.cgro.appnettsegur.data.model.TipoNotificacion
 import com.cgro.appnettsegur.data.remote.FirebaseFlows
+import com.cgro.appnettsegur.notificaciones.RegistroMostradas
 import com.google.firebase.database.DataSnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -57,8 +58,9 @@ class NotificacionesRepositoryImpl(private val context: Context) : Notificacione
     override fun noLeidas(uid: String): Flow<Int> {
         if (!configurado) return flowOf(0)
         // Se cuenta sobre el nodo completo: el contador debe reflejar todas las no leídas, no solo 50.
+        // Se usa la misma función pura que la prueba unitaria (RegistroMostradas.conteoNoLeidas).
         return FirebaseFlows.flujoValor(FirebaseFlows.ref(RutasFirebase.notificaciones(uid))) { snap ->
-            snap.children.count { it.child("leida").getValue(Boolean::class.java) != true }
+            RegistroMostradas.conteoNoLeidas(snap.children.mapNotNull { it.aNotificacion() })
         }
     }
 
