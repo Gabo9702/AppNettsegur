@@ -28,6 +28,9 @@ interface NotificacionesRepository {
     /** Cantidad de notificaciones sin leer (para el contador de la campana). */
     fun noLeidas(uid: String): Flow<Int>
 
+    /** Lectura puntual (sin listener): la usa el worker periódico con la app cerrada (fase 3). */
+    suspend fun leerUnaVez(uid: String): List<Notificacion>
+
     /** Marca una notificación como leída (solo escribe el campo `leida`). */
     suspend fun marcarLeida(uid: String, notificacionId: String): Result<Unit>
 
@@ -58,6 +61,15 @@ class NotificacionesRepositoryImpl(private val context: Context) : Notificacione
             snap.children.count { it.child("leida").getValue(Boolean::class.java) != true }
         }
     }
+
+    override suspend fun leerUnaVez(uid: String): List<Notificacion> =
+        withContext(Dispatchers.IO) {
+            if (!configurado) return@withContext emptyList()
+            runCatching {
+                val snap = FirebaseFlows.ref(RutasFirebase.notificaciones(uid)).get().await()
+                snap.children.mapNotNull { it.aNotificacion() }.sortedByDescending { it.fecha }
+            }.getOrDefault(emptyList())
+        }
 
     override suspend fun marcarLeida(uid: String, notificacionId: String): Result<Unit> =
         withContext(Dispatchers.IO) {

@@ -13,10 +13,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -48,10 +46,19 @@ class ObservadorNotificaciones(
     fun iniciar() {
         PublicadorNotificaciones.crearCanal(appContext)
 
-        // 1) Al cerrar sesión se limpia el registro de "ya mostradas" (fase 2).
+        // 1) Reacciona a los cambios de sesión: programa/cancela el worker periódico (fase 3) y,
+        //    al cerrar sesión, limpia el registro de "ya mostradas" (fase 2).
+        // sesion.usuario es un StateFlow: ya emite solo cuando el usuario cambia.
         scope.launch {
-            sesion.usuario.map { it?.uid }.distinctUntilChanged().collect { uid ->
-                if (uid == null) store.limpiarMostradas()
+            sesion.usuario.collect { usuario ->
+                when {
+                    usuario == null -> {
+                        store.limpiarMostradas()
+                        ProgramadorTrabajos.cancelarRecepcion(appContext)
+                    }
+                    usuario.rol in RECEPTORES_FIREBASE -> ProgramadorTrabajos.programarRecepcion(appContext)
+                    else -> ProgramadorTrabajos.cancelarRecepcion(appContext)
+                }
             }
         }
 
