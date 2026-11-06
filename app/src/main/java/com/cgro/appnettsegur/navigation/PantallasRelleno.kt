@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,6 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.cgro.appnettsegur.config.Mensajes
 import com.cgro.appnettsegur.ui.compartido.BarraRol
+import com.cgro.appnettsegur.ui.notificaciones.CampanaNotificaciones
+import com.cgro.appnettsegur.ui.notificaciones.ResumenVencimientosRh
+import com.cgro.appnettsegur.ui.notificaciones.SolicitarPermisoNotificaciones
 
 /**
  * Pantallas de RELLENO de la fase A (MODULOS.md, sección 6.2).
@@ -38,17 +40,19 @@ fun InicioRolRelleno(
     nombreUsuario: String,
     onBandeja: () -> Unit,
     onCerrarSesion: () -> Unit,
+    pedirPermisoNotificaciones: Boolean = false,
+    mostrarResumenVencimientos: Boolean = false,
 ) {
+    // M3: cliente e ingeniero (receptores de avisos del sistema) piden el permiso al entrar.
+    if (pedirPermisoNotificaciones) SolicitarPermisoNotificaciones()
     Scaffold(
         topBar = {
             BarraRol(
                 titulo = tituloRol,
                 subtitulo = nombreUsuario.takeIf { it.isNotBlank() },
                 acciones = {
-                    // Espacio de la campana (M3): por ahora un acceso directo a la bandeja.
-                    IconButton(onClick = onBandeja) {
-                        Icon(Icons.Outlined.Notifications, contentDescription = "Notificaciones")
-                    }
+                    // Campana real de M3 con el contador de no leídas; abre la bandeja.
+                    CampanaNotificaciones(onAbrir = onBandeja)
                     IconButton(onClick = onCerrarSesion) {
                         Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = Mensajes.CERRAR_SESION)
                     }
@@ -58,9 +62,11 @@ fun InicioRolRelleno(
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = if (mostrarResumenVencimientos) Arrangement.spacedBy(16.dp) else Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // M3: el inicio de RH muestra la tarjeta "N vencidos · M por vencer" (fase 4).
+            if (mostrarResumenVencimientos) ResumenVencimientosRh()
             Text(
                 Mensajes.pantallaEnConstruccion(tituloRol),
                 style = MaterialTheme.typography.bodyLarge,

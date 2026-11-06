@@ -35,10 +35,14 @@ import com.cgro.appnettsegur.ui.detalle.DetalleScreen
 import com.cgro.appnettsegur.ui.inicio.InicioScreen
 import com.cgro.appnettsegur.ui.listado.ListadoScreen
 import com.cgro.appnettsegur.ui.login.LoginScreen
+import com.cgro.appnettsegur.ui.notificaciones.BandejaScreen
 import kotlinx.coroutines.launch
 
 @Composable
-fun NavGraph() {
+fun NavGraph(
+    rutaPendiente: String? = null,
+    onRutaConsumida: () -> Unit = {},
+) {
     val navController = rememberNavController()
     val snackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
@@ -60,6 +64,9 @@ fun NavGraph() {
     val falloSimuladoEn by sync.falloSimuladoEn.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { sync.mensajes.collect { mensajero(it) } }
 
+    // M3: con la app en primer plano, una notificación nueva solo muestra un snackbar.
+    LaunchedEffect(Unit) { container.observadorNotificaciones.snackbars.collect { mensajero(it) } }
+
     // Pantalla inicial: inicio del rol si hay sesión en caché (sin Internet); si no, Login (5.1).
     var inicio by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
@@ -73,6 +80,15 @@ fun NavGraph() {
         }
     }
     val destinoInicial = inicio ?: return
+
+    // M3: si la app se abrió tocando una notificación, navega a su destino (solo con sesión activa).
+    LaunchedEffect(rutaPendiente, usuario?.uid) {
+        val ruta = rutaPendiente ?: return@LaunchedEffect
+        if (usuario != null) {
+            navController.navigate(ruta) { launchSingleTop = true }
+            onRutaConsumida()
+        }
+    }
 
     // Tras iniciar sesión: ir al inicio del rol, sin dejar el login en la pila.
     val irAInicioDeRol: (Rol) -> Unit = { rol ->
@@ -144,15 +160,18 @@ fun NavGraph() {
                 // ---------- Inicios de los demás roles (relleno; M2 los reemplaza) ----------
                 composable(Rutas.INICIO_CLIENTE) {
                     InicioRolRelleno("Cliente", usuario?.nombre.orEmpty(),
-                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion,
+                        pedirPermisoNotificaciones = true)
                 }
                 composable(Rutas.INICIO_INGENIERO) {
                     InicioRolRelleno("Ingeniero", usuario?.nombre.orEmpty(),
-                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion,
+                        pedirPermisoNotificaciones = true)
                 }
                 composable(Rutas.INICIO_RH) {
                     InicioRolRelleno("HCQ y RH", usuario?.nombre.orEmpty(),
-                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion)
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion,
+                        mostrarResumenVencimientos = true)
                 }
                 composable(Rutas.INICIO_ANALISTA) {
                     InicioRolRelleno("Analista", usuario?.nombre.orEmpty(),
@@ -168,8 +187,13 @@ fun NavGraph() {
                     Rutas.EMPLEADO_DETALLE,
                     arguments = listOf(navArgument(Rutas.ARG_EMPLEADO) { type = NavType.StringType }),
                 ) { PantallaRellenoSimple("Empleado", onVolver = { navController.popBackStack() }) }
+                // ---------- Bandeja de notificaciones (M3) ----------
                 composable(Rutas.BANDEJA) {
-                    PantallaRellenoSimple("Notificaciones", onVolver = { navController.popBackStack() })
+                    BandejaScreen(
+                        onVolver = { navController.popBackStack() },
+                        onAbrirNovedad = { refId -> navController.navigate(Rutas.novedadRemota(refId)) },
+                        onAbrirProyecto = { pid -> navController.navigate(Rutas.proyectoDetalle(pid)) },
+                    )
                 }
                 composable(
                     Rutas.NOVEDAD_REMOTA,
