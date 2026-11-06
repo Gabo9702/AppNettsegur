@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * Genera en el dispositivo el PDF de una carta de presentación (M2, fase 4, CU-09).
@@ -25,7 +26,9 @@ object CartaPdf {
     private const val ANCHO = 595  // A4 a 72 dpi (vertical)
     private const val ALTO = 842
     private const val MARGEN = 48f
-    private val FMT = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy")
+    // Locale español: el nombre del mes debe salir en español (p. ej. "noviembre"),
+    // sin depender del idioma del dispositivo.
+    private val FMT = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale("es"))
 
     suspend fun generar(
         context: Context,

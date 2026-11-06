@@ -38,7 +38,11 @@ object FirebaseFlows {
             }
 
             override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
+                // Al cerrar sesión, los listeners activos reciben PERMISSION_DENIED.
+                // Cerramos el flujo SIN excepción: si el colector corre en el hilo
+                // principal sin .catch, propagar el error lo tumbaría. La UI ya
+                // gestiona los estados vacío / "sin conexión".
+                close()
             }
         }
         query.addValueEventListener(listener)
