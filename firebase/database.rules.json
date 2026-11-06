@@ -1,0 +1,121 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "usuarios": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid && newData.child('rol').val() === data.child('rol').val()"
+      }
+    },
+
+    "proyectos": {
+      "$pid": {
+        ".read": "auth != null && (data.child('clienteUid').val() == auth.uid || data.child('ingenieroUid').val() == auth.uid || data.child('tecnicos').child(auth.uid).exists())",
+
+        "hitos": {
+          ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO' && root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid"
+        },
+        "avancePorcentaje": {
+          ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO' && root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid"
+        },
+        "tecnicos": {
+          ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO' && root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid"
+        },
+        "personal": {
+          ".write": "auth != null && ((root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO' && root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid) || root.child('usuarios').child(auth.uid).child('rol').val() == 'RH')"
+        }
+      }
+    },
+
+    "novedades": {
+      "$id": {
+        ".read": "auth != null && (data.child('uidTecnico').val() == auth.uid || root.child('proyectos').child(data.child('proyectoId').val()).child('clienteUid').val() == auth.uid || root.child('proyectos').child(data.child('proyectoId').val()).child('ingenieroUid').val() == auth.uid)",
+        ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'TECNICO' && newData.child('uidTecnico').val() == auth.uid"
+      }
+    },
+
+    "indices": {
+      "novedadesPorProyecto": {
+        "$pid": {
+          ".read": "auth != null && (root.child('proyectos').child($pid).child('clienteUid').val() == auth.uid || root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid || root.child('proyectos').child($pid).child('tecnicos').child(auth.uid).exists())",
+          "$id": {
+            ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'TECNICO'"
+          }
+        }
+      },
+      "proyectosPorTecnico": {
+        "$uidTecnico": {
+          ".read": "auth != null && auth.uid == $uidTecnico",
+          "$pid": {
+            ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO' && root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid"
+          }
+        }
+      },
+      "proyectosPorCliente": {
+        "$uid": {
+          ".read": "auth != null && auth.uid == $uid"
+        }
+      },
+      "proyectosPorIngeniero": {
+        "$uid": {
+          ".read": "auth != null && auth.uid == $uid"
+        }
+      },
+      "cartasPorProyecto": {
+        "$pid": {
+          ".read": "auth != null && (root.child('proyectos').child($pid).child('clienteUid').val() == auth.uid || root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA' || root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO')",
+          "$cartaId": {
+            ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA'"
+          }
+        }
+      }
+    },
+
+    "documentos": {
+      "$pid": {
+        ".read": "auth != null && (root.child('proyectos').child($pid).child('clienteUid').val() == auth.uid || root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid)",
+        ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO' && root.child('proyectos').child($pid).child('ingenieroUid').val() == auth.uid"
+      }
+    },
+
+    "archivos": {
+      "$archivoId": {
+        ".read": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() != 'TECNICO'",
+        ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO' || root.child('usuarios').child(auth.uid).child('rol').val() == 'RH' || root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA')"
+      }
+    },
+
+    "empleados": {
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() == 'RH' || root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA' || root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO')",
+      "$empleadoId": {
+        ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'RH'",
+        "carne": {
+          ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() == 'RH' || root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA')"
+        }
+      }
+    },
+
+    "cartas": {
+      ".indexOn": ["proyectoId"],
+      "$cartaId": {
+        ".read": "auth != null && (root.child('proyectos').child(data.child('proyectoId').val()).child('clienteUid').val() == auth.uid || root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA' || root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO')",
+        ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA'"
+      }
+    },
+
+    "notificaciones": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".indexOn": ["fecha"],
+        "$notificacionId": {
+          ".write": "auth != null && ((newData.child('tipo').val() == 'NOVEDAD_SINCRONIZADA' && root.child('usuarios').child(auth.uid).child('rol').val() == 'TECNICO') || (newData.child('tipo').val() == 'DOCUMENTO_NUEVO' && root.child('usuarios').child(auth.uid).child('rol').val() == 'INGENIERO') || (newData.child('tipo').val() == 'CARTA_NUEVA' && root.child('usuarios').child(auth.uid).child('rol').val() == 'ANALISTA'))",
+          "leida": {
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        }
+      }
+    }
+  }
+}

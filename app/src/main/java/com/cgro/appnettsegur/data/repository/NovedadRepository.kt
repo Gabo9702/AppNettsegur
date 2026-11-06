@@ -2,19 +2,22 @@ package com.cgro.appnettsegur.data.repository
 
 import android.content.Context
 import androidx.room.withTransaction
+import com.cgro.appnettsegur.config.RutasFirebase
 import com.cgro.appnettsegur.data.local.AppDatabase
 import com.cgro.appnettsegur.data.local.Conteos
 import com.cgro.appnettsegur.data.local.EstadoSync
 import com.cgro.appnettsegur.data.local.EvidenciaEntity
 import com.cgro.appnettsegur.data.local.NovedadEntity
 import com.cgro.appnettsegur.data.local.ProyectoEntity
+import com.cgro.appnettsegur.data.remote.FirebaseFlows
+import com.cgro.appnettsegur.data.remote.aProyecto
 import com.cgro.appnettsegur.util.FirmaFormulario
 import com.cgro.appnettsegur.util.FirmaUtils
 import com.cgro.appnettsegur.util.ImagenUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
 import java.io.File
 
 /** Foto del formulario: puede ser temporal (recién tomada) o ya guardada (al editar). */
@@ -127,20 +130,35 @@ class NovedadRepository(
         true
     }
 
-    /** Carga assets/proyectos.json en Room la primera vez, para que la selección funcione sin Internet. */
-    suspend fun cargarCatalogoSiVacio() = withContext(Dispatchers.IO) {
-        if (proyectoDao.contar() > 0) return@withContext
-        val json = context.assets.open("proyectos.json").bufferedReader().use { it.readText() }
-        val arreglo = JSONArray(json)
-        val proyectos = (0 until arreglo.length()).map { i ->
-            val o = arreglo.getJSONObject(i)
-            ProyectoEntity(
-                proyectoId = o.getString("proyectoId"),
-                nombreProyecto = o.getString("nombreProyecto"),
-                nombreCliente = o.getString("nombreCliente"),
-            )
+    /**
+     * Descarga los proyectos asignados al técnico desde indices/proyectosPorTecnico y los guarda en
+     * Room (MODULOS.md, sección 5.2), para que la selección funcione luego sin Internet. Requiere red.
+     *
+     * Devuelve la cantidad de proyectos descargados. Si Firebase no está configurado, no toca la
+     * caché y devuelve 0. Incluye clienteUid e ingenieroUid: la sincronización los usa para notificar.
+     */
+    suspend fun actualizarProyectosDelTecnico(uid: String): Result<Int> = withContext(Dispatchers.IO) {
+        runCatching {
+            if (uid.isBlank() || !FirebaseFlows.configurado(context)) return@runCatching 0
+            val indice = FirebaseFlows.ref(RutasFirebase.proyectosPorTecnico(uid)).get().await()
+            val ids = indice.children.mapNotNull { it.key }
+            val ahora = System.currentTimeMillis()
+            val proyectos = ids.mapNotNull { pid ->
+                val p = FirebaseFlows.ref(RutasFirebase.proyecto(pid)).get().await().aProyecto()
+                    ?: return@mapNotNull null
+                ProyectoEntity(
+                    proyectoId = p.proyectoId,
+                    nombreProyecto = p.nombreProyecto,
+                    nombreCliente = p.nombreCliente,
+                    clienteUid = p.clienteUid,
+                    ingenieroUid = p.ingenieroUid,
+                    fechaActualizacion = ahora,
+                )
+            }
+            // La lectura del índice fue exitosa (hay red): reemplazamos la caché por lo asignado hoy.
+            proyectoDao.reemplazarTodos(proyectos)
+            proyectos.size
         }
-        proyectoDao.insertarTodos(proyectos)
     }
 
     private suspend fun exportarFirma(firma: FirmaFormulario, destino: File, grosorPx: Float): String {

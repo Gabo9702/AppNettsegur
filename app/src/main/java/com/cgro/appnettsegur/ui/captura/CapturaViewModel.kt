@@ -16,9 +16,10 @@ import com.cgro.appnettsegur.config.Mensajes
 import com.cgro.appnettsegur.data.local.EstadoSync
 import com.cgro.appnettsegur.data.local.NovedadEntity
 import com.cgro.appnettsegur.data.local.ProyectoEntity
-import com.cgro.appnettsegur.data.prefs.PerfilTecnicoStore
 import com.cgro.appnettsegur.data.repository.EvidenciaFormulario
 import com.cgro.appnettsegur.data.repository.NovedadRepository
+import com.cgro.appnettsegur.data.repository.SesionRepository
+import com.cgro.appnettsegur.util.ConectividadMonitor
 import com.cgro.appnettsegur.navigation.Rutas
 import com.cgro.appnettsegur.util.FirmaFormulario
 import com.cgro.appnettsegur.util.ImagenUtils
@@ -89,7 +90,8 @@ sealed interface EventoCaptura {
 class CapturaViewModel(
     private val app: Application,
     private val repositorio: NovedadRepository,
-    private val perfil: PerfilTecnicoStore,
+    private val sesion: SesionRepository,
+    private val conectividad: ConectividadMonitor,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -111,12 +113,23 @@ class CapturaViewModel(
             repositorio.observarProyectos().collect { lista -> _estado.update { it.copy(proyectos = lista) } }
         }
         viewModelScope.launch { cargar() }
+        // Al abrir la captura con red, se refresca la lista de proyectos asignados (sección 5.2).
+        if (conectividad.hayInternet.value) {
+            viewModelScope.launch {
+                sesion.usuario.value?.uid?.let { repositorio.actualizarProyectosDelTecnico(it) }
+            }
+        }
     }
 
     private suspend fun cargar() {
         if (idEdicion == null) {
+            // El nombre del técnico sale de la sesión en caché (sección 5.1).
             _estado.update {
-                it.copy(cargando = false, idRegistro = UUID.randomUUID().toString(), nombreTecnico = perfil.obtenerNombre())
+                it.copy(
+                    cargando = false,
+                    idRegistro = UUID.randomUUID().toString(),
+                    nombreTecnico = sesion.usuario.value?.nombre.orEmpty(),
+                )
             }
             return
         }
@@ -306,6 +319,8 @@ class CapturaViewModel(
             rolRepresentanteCliente = s.rolRepresentante.trim(),
             rutaFirmaTecnico = "", // el repositorio asigna la ruta del PNG
             rutaFirmaRepresentante = "",
+            // uid del técnico autor: lo exige la regla de escritura de novedades (R: uidTecnico == auth.uid).
+            uidTecnico = sesion.usuario.value?.uid ?: original?.uidTecnico ?: "",
             // Un registro editado (aunque estuviera en ERROR) vuelve a quedar PENDIENTE de enviar.
             estadoSync = EstadoSync.PENDIENTE,
             fechaCreacion = original?.fechaCreacion ?: ahora,
@@ -344,7 +359,13 @@ class CapturaViewModel(
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as AppNettsegur
-                CapturaViewModel(app, app.container.novedadRepository, app.container.perfilStore, createSavedStateHandle())
+                CapturaViewModel(
+                    app,
+                    app.container.novedadRepository,
+                    app.container.sesionRepository,
+                    app.container.conectividad,
+                    createSavedStateHandle(),
+                )
             }
         }
     }
