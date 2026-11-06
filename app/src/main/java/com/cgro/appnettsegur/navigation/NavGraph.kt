@@ -36,6 +36,8 @@ import com.cgro.appnettsegur.ui.cliente.InicioClienteScreen
 import com.cgro.appnettsegur.ui.ingeniero.InicioIngenieroScreen
 import com.cgro.appnettsegur.ui.compartido.NovedadRemotaScreen
 import com.cgro.appnettsegur.ui.compartido.ProyectoDetalleScreen
+import com.cgro.appnettsegur.ui.rh.EmpleadoDetalleScreen
+import com.cgro.appnettsegur.ui.rh.InicioRhScreen
 import com.cgro.appnettsegur.ui.inicio.InicioScreen
 import com.cgro.appnettsegur.ui.listado.ListadoScreen
 import com.cgro.appnettsegur.ui.login.LoginScreen
@@ -180,9 +182,12 @@ fun NavGraph(
                     )
                 }
                 composable(Rutas.INICIO_RH) {
-                    InicioRolRelleno("HCQ y RH", usuario?.nombre.orEmpty(),
-                        onBandeja = { navController.navigate(Rutas.BANDEJA) }, onCerrarSesion = cerrarSesion,
-                        mostrarResumenVencimientos = true)
+                    InicioRhScreen(
+                        nombreUsuario = usuario?.nombre.orEmpty(),
+                        onAbrirEmpleado = { navController.navigate(Rutas.empleadoDetalle(it)) },
+                        onBandeja = { navController.navigate(Rutas.BANDEJA) },
+                        onCerrarSesion = cerrarSesion,
+                    )
                 }
                 composable(Rutas.INICIO_ANALISTA) {
                     InicioRolRelleno("Analista", usuario?.nombre.orEmpty(),
@@ -203,7 +208,7 @@ fun NavGraph(
                 composable(
                     Rutas.EMPLEADO_DETALLE,
                     arguments = listOf(navArgument(Rutas.ARG_EMPLEADO) { type = NavType.StringType }),
-                ) { PantallaRellenoSimple("Empleado", onVolver = { navController.popBackStack() }) }
+                ) { EmpleadoDetalleScreen(onVolver = { navController.popBackStack() }) }
                 // ---------- Bandeja de notificaciones (M3) ----------
                 composable(Rutas.BANDEJA) {
                     BandejaScreen(
