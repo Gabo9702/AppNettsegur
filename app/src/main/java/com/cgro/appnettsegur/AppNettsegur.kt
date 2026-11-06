@@ -20,6 +20,8 @@ import com.cgro.appnettsegur.data.repository.ProyectosRepository
 import com.cgro.appnettsegur.data.repository.ProyectosRepositoryImpl
 import com.cgro.appnettsegur.data.repository.SesionRepositoryImpl
 import com.cgro.appnettsegur.data.repository.SyncRepository
+import com.cgro.appnettsegur.notificaciones.NotificacionesStore
+import com.cgro.appnettsegur.notificaciones.ObservadorNotificaciones
 import com.cgro.appnettsegur.util.ConectividadMonitor
 import com.cgro.appnettsegur.util.ImagenUtils
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +59,14 @@ class AppContainer(context: Context) {
 
     // Recepción de notificaciones (M3): bandeja, campana y avisos del sistema.
     val notificacionesRepository: NotificacionesRepository = NotificacionesRepositoryImpl(appContext)
+    val notificacionesStore = NotificacionesStore(appContext)
+    val observadorNotificaciones = ObservadorNotificaciones(
+        appContext = appContext,
+        sesion = sesionRepository,
+        repo = notificacionesRepository,
+        store = notificacionesStore,
+        scope = appScope,
+    )
 }
 
 class AppNettsegur : Application() {
@@ -67,6 +77,8 @@ class AppNettsegur : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        // M3: crea el canal de notificaciones y empieza a escuchar las del receptor con sesión.
+        container.observadorNotificaciones.iniciar()
         container.appScope.launch {
             // Los proyectos del técnico ya no vienen de assets: se descargan del índice al iniciar
             // sesión o con "Actualizar proyectos" (sección 5.2). Aquí solo se limpian temporales.

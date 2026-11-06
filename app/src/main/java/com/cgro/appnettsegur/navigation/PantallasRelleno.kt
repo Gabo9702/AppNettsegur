@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.cgro.appnettsegur.config.Mensajes
 import com.cgro.appnettsegur.ui.compartido.BarraRol
 import com.cgro.appnettsegur.ui.notificaciones.CampanaNotificaciones
+import com.cgro.appnettsegur.ui.notificaciones.SolicitarPermisoNotificaciones
 
 /**
  * Pantallas de RELLENO de la fase A (MODULOS.md, sección 6.2).
@@ -38,7 +39,10 @@ fun InicioRolRelleno(
     nombreUsuario: String,
     onBandeja: () -> Unit,
     onCerrarSesion: () -> Unit,
+    pedirPermisoNotificaciones: Boolean = false,
 ) {
+    // M3: cliente e ingeniero (receptores de avisos del sistema) piden el permiso al entrar.
+    if (pedirPermisoNotificaciones) SolicitarPermisoNotificaciones()
     Scaffold(
         topBar = {
             BarraRol(
