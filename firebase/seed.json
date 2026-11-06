@@ -1,0 +1,129 @@
+{
+  "usuarios": {
+    "5YdtZKGvVlckm38c850wvimSLWJ2": {
+      "nombre": "Carlos Técnico",
+      "correo": "tecnico@nettsegur.test",
+      "rol": "TECNICO",
+      "empleadoId": "EMP-001"
+    },
+    "2ktf1er90QbtDwV9cUcIyVW5YRB3": {
+      "nombre": "Alcaldía Municipal de Chía",
+      "correo": "cliente@nettsegur.test",
+      "rol": "CLIENTE"
+    },
+    "vohERJgGpQMUgn5U0KTdCVAtCHC3": {
+      "nombre": "Laura Ingeniera",
+      "correo": "ingeniero@nettsegur.test",
+      "rol": "INGENIERO"
+    },
+    "nNHxouRiZhfjzwnwCmjrBwe5dXu2": {
+      "nombre": "Sofía Talento Humano",
+      "correo": "rh@nettsegur.test",
+      "rol": "RH"
+    },
+    "ZNJVGSGFB9RrLdIRNrGbtFbJ4Gj2": {
+      "nombre": "Andrés Analista",
+      "correo": "analista@nettsegur.test",
+      "rol": "ANALISTA"
+    }
+  },
+
+  "proyectos": {
+    "PRY-001": {
+      "nombreProyecto": "CCTV Alcaldía de Chía",
+      "nombreCliente": "Alcaldía Municipal de Chía",
+      "clienteUid": "2ktf1er90QbtDwV9cUcIyVW5YRB3",
+      "ingenieroUid": "vohERJgGpQMUgn5U0KTdCVAtCHC3",
+      "estado": "EN_EJECUCION",
+      "avancePorcentaje": 50,
+      "hitos": {
+        "H1": { "nombre": "Visita y diagnóstico", "fechaInicio": 1757000000000, "fechaFin": 1757600000000, "completado": true, "orden": 1 },
+        "H2": { "nombre": "Cableado estructurado", "fechaInicio": 1757700000000, "fechaFin": 1758900000000, "completado": true, "orden": 2 },
+        "H3": { "nombre": "Instalación de cámaras", "fechaInicio": 1759000000000, "fechaFin": 1760200000000, "completado": false, "orden": 3 },
+        "H4": { "nombre": "Pruebas y entrega", "fechaInicio": 1760300000000, "fechaFin": 1761500000000, "completado": false, "orden": 4 }
+      },
+      "tecnicos": {
+        "5YdtZKGvVlckm38c850wvimSLWJ2": true
+      },
+      "personal": {
+        "EMP-001": { "nombre": "Carlos Técnico", "cedula": "1012345678", "estadoCumplimiento": "VIGENTE" }
+      }
+    },
+
+    "PRY-002": {
+      "nombreProyecto": "Control de acceso Bodega Siberia",
+      "nombreCliente": "Alcaldía Municipal de Chía",
+      "clienteUid": "2ktf1er90QbtDwV9cUcIyVW5YRB3",
+      "ingenieroUid": "vohERJgGpQMUgn5U0KTdCVAtCHC3",
+      "estado": "EN_EJECUCION",
+      "avancePorcentaje": 33,
+      "hitos": {
+        "H1": { "nombre": "Levantamiento en sitio", "fechaInicio": 1757000000000, "fechaFin": 1757600000000, "completado": true, "orden": 1 },
+        "H2": { "nombre": "Montaje de controladoras", "fechaInicio": 1757700000000, "fechaFin": 1758900000000, "completado": false, "orden": 2 },
+        "H3": { "nombre": "Configuración y entrega", "fechaInicio": 1759000000000, "fechaFin": 1760200000000, "completado": false, "orden": 3 }
+      },
+      "tecnicos": {
+        "5YdtZKGvVlckm38c850wvimSLWJ2": true
+      },
+      "personal": {
+        "EMP-001": { "nombre": "Carlos Técnico", "cedula": "1012345678", "estadoCumplimiento": "VIGENTE" },
+        "EMP-003": { "nombre": "María Gómez", "cedula": "1034567890", "estadoCumplimiento": "VIGENTE" }
+      }
+    }
+  },
+
+  "empleados": {
+    "EMP-001": {
+      "nombre": "Carlos Técnico",
+      "cedula": "1012345678",
+      "cargo": "Técnico de campo",
+      "uid": "5YdtZKGvVlckm38c850wvimSLWJ2",
+      "cumplimiento": {
+        "ARL": { "fechaExpedicion": "2026-01-15", "fechaVencimiento": "2027-01-15", "archivoId": "ARCH_EMP001_ARL" },
+        "SEGURIDAD_SOCIAL": { "fechaExpedicion": "2026-10-01", "fechaVencimiento": "2026-12-31", "archivoId": "ARCH_EMP001_SS" },
+        "ALTURAS": { "fechaExpedicion": "2025-06-01", "fechaVencimiento": "2027-06-01", "archivoId": "ARCH_EMP001_ALT" }
+      }
+    },
+    "EMP-002": {
+      "nombre": "Pedro López",
+      "cedula": "1023456789",
+      "cargo": "Auxiliar de instalación",
+      "cumplimiento": {
+        "ARL": { "fechaExpedicion": "2026-01-10", "fechaVencimiento": "2027-01-10", "archivoId": "ARCH_EMP002_ARL" },
+        "SEGURIDAD_SOCIAL": { "fechaExpedicion": "2026-02-01", "fechaVencimiento": "2027-02-01", "archivoId": "ARCH_EMP002_SS" },
+        "ALTURAS": { "fechaExpedicion": "2024-08-01", "fechaVencimiento": "2026-09-01", "archivoId": "ARCH_EMP002_ALT" }
+      }
+    },
+    "EMP-003": {
+      "nombre": "María Gómez",
+      "cedula": "1034567890",
+      "cargo": "Instaladora de redes",
+      "cumplimiento": {
+        "ARL": { "fechaExpedicion": "2026-03-01", "fechaVencimiento": "2027-03-01", "archivoId": "ARCH_EMP003_ARL" },
+        "SEGURIDAD_SOCIAL": { "fechaExpedicion": "2026-03-01", "fechaVencimiento": "2027-03-01", "archivoId": "ARCH_EMP003_SS" },
+        "ALTURAS": { "fechaExpedicion": "2025-11-01", "fechaVencimiento": "2027-11-01", "archivoId": "ARCH_EMP003_ALT" }
+      }
+    }
+  },
+
+  "indices": {
+    "proyectosPorTecnico": {
+      "5YdtZKGvVlckm38c850wvimSLWJ2": {
+        "PRY-001": true,
+        "PRY-002": true
+      }
+    },
+    "proyectosPorCliente": {
+      "2ktf1er90QbtDwV9cUcIyVW5YRB3": {
+        "PRY-001": true,
+        "PRY-002": true
+      }
+    },
+    "proyectosPorIngeniero": {
+      "vohERJgGpQMUgn5U0KTdCVAtCHC3": {
+        "PRY-001": true,
+        "PRY-002": true
+      }
+    }
+  }
+}
